@@ -1,0 +1,429 @@
+(* Multiplication-based refresh *)
+proc REFM:
+ inputs: x[0:1]
+ outputs: y[0:1]
+ randoms: r01;
+  y[0] := x[0];
+  y[1] := x[1];
+  y[0] := y[0] + r01;
+  y[1] := y[1] + r01;
+end
+
+(* SNI secure AND *)
+proc AND:
+ inputs: a[0:1], b[0:1]
+ outputs: c[0:1]
+ randoms: r01;
+  c[0] := a[0] * b[0];
+  c[1] := a[1] * b[1];
+  c[0] := c[0] + r01;
+  a0_b1 := a[0] * b[1];
+  a1_b0 := a[1] * b[0];
+  r10 := a0_b1 + r01;
+  r10 := r10   + a1_b0;
+  c[1] := c[1] + r10;
+end
+
+(* Compute parity of N shares*)
+proc PARITY_N:
+  inputs: in1_[0:1],in2_[0:1],in3_[0:1],in4_[0:1]
+  outputs: out[0:1];
+  out := in1_ + in2_;
+  out := out + in3_;
+  out := out + in4_;
+end
+
+(* Compute parity of N-1 shares*)
+proc PARITY_Nm1:
+  inputs: in1_[0:1],in2_[0:1],in3_[0:1]
+  outputs: out[0:1];
+  out := in1_ + in2_;
+  out := out + in3_;
+end
+
+(* Affine layer gadget *)
+proc AFFINE:
+  inputs: st1_[0:1],st2_[0:1],st3_[0:1],st4_[0:1],st5_[0:1],st6_[0:1],st7_[0:1],st8_[0:1],st9_[0:1]
+  outputs: a1_[0:1],a2_[0:1],a3_[0:1],a4_[0:1],a5_[0:1],a6_[0:1],a7_[0:1],a8_[0:1],a9_[0:1];
+  a1_ := st1_ + st2_;
+  a1_ := a1_ + st3_;
+  a1_ := a1_ + st4_;
+  a1_ := a1_ + st5_;
+  a1_ := a1_ + st6_;
+  a1_ := a1_ + st7_;
+  a1_ := a1_ + st8_;
+  a1_ := a1_ + st9_;
+  a2_ := st1_ + st2_;
+  a2_ := a2_ + st3_;
+  a2_ := a2_ + st4_;
+  a2_ := a2_ + st5_;
+  a2_ := a2_ + st6_;
+  a2_ := a2_ + st7_;
+  a2_ := a2_ + st8_;
+  a2_ := a2_ + st9_;
+  a3_ := st1_ + st2_;
+  a3_ := a3_ + st3_;
+  a3_ := a3_ + st4_;
+  a3_ := a3_ + st5_;
+  a3_ := a3_ + st6_;
+  a3_ := a3_ + st7_;
+  a3_ := a3_ + st8_;
+  a3_ := a3_ + st9_;
+  a4_ := st1_ + st2_;
+  a4_ := a4_ + st3_;
+  a4_ := a4_ + st4_;
+  a4_ := a4_ + st5_;
+  a4_ := a4_ + st6_;
+  a4_ := a4_ + st7_;
+  a4_ := a4_ + st8_;
+  a4_ := a4_ + st9_;
+  a5_ := st1_ + st2_;
+  a5_ := a5_ + st3_;
+  a5_ := a5_ + st4_;
+  a5_ := a5_ + st5_;
+  a5_ := a5_ + st6_;
+  a5_ := a5_ + st7_;
+  a5_ := a5_ + st8_;
+  a5_ := a5_ + st9_;
+  a6_ := st1_ + st2_;
+  a6_ := a6_ + st3_;
+  a6_ := a6_ + st4_;
+  a6_ := a6_ + st5_;
+  a6_ := a6_ + st6_;
+  a6_ := a6_ + st7_;
+  a6_ := a6_ + st8_;
+  a6_ := a6_ + st9_;
+  a7_ := st1_ + st2_;
+  a7_ := a7_ + st3_;
+  a7_ := a7_ + st4_;
+  a7_ := a7_ + st5_;
+  a7_ := a7_ + st6_;
+  a7_ := a7_ + st7_;
+  a7_ := a7_ + st8_;
+  a7_ := a7_ + st9_;
+  a8_ := st1_ + st2_;
+  a8_ := a8_ + st3_;
+  a8_ := a8_ + st4_;
+  a8_ := a8_ + st5_;
+  a8_ := a8_ + st6_;
+  a8_ := a8_ + st7_;
+  a8_ := a8_ + st8_;
+  a8_ := a8_ + st9_;
+  a9_ := st1_ + st2_;
+  a9_ := a9_ + st3_;
+  a9_ := a9_ + st4_;
+  a9_ := a9_ + st5_;
+  a9_ := a9_ + st6_;
+  a9_ := a9_ + st7_;
+  a9_ := a9_ + st8_;
+  a9_ := a9_ + st9_;
+end
+
+proc PICNIC_AND_OFFLINE:
+  inputs: lx[0:1], ly[0:1], lz[0:1], helper_P1_[0:1], helper_P2_[0:1], helper_P3_[0:1]
+  outputs: helper_P4_[0:1]
+  shares: helper_Nm1[0:1], lxy[0:1];
+helper_Nm1 = PARITY_Nm1(helper_P1_, helper_P2_, helper_P3_);
+lxy = AND(lx, ly);
+helper_P4_ := lxy + helper_Nm1;
+helper_P4_ := helper_P4_ + lz;
+end
+
+proc SBOX_OFFLINE:
+  inputs: lc[0:1], lb[0:1], la[0:1], lf[0:1], le[0:1], ld[0:1], helper_P1_ab[0:1], helper_P1_ca[0:1], helper_P1_bc[0:1], helper_P2_ab[0:1], helper_P2_ca[0:1], helper_P2_bc[0:1], helper_P3_ab[0:1], helper_P3_ca[0:1], helper_P3_bc[0:1]  
+  outputs: helper_P4_ab[0:1], helper_P4_ca[0:1], helper_P4_bc[0:1]  
+  shares: lzab[0:1], lzca[0:1], lzbc[0:1]; 
+lzab := lf + la;
+lzab := lzab + lb;
+lzab := lzab + lc;
+lzbc := ld + la;
+lzca := le + la;
+lzca := lzca + lb;
+helper_P4_ab = PICNIC_AND_OFFLINE(la, lb, lzab, helper_P1_ab, helper_P2_ab, helper_P3_ab);
+helper_P4_bc = PICNIC_AND_OFFLINE(lb, lc, lzbc, helper_P1_bc, helper_P2_bc, helper_P3_bc);
+helper_P4_ca = PICNIC_AND_OFFLINE(lc, la, lzca, helper_P1_ca, helper_P2_ca, helper_P3_ca);
+end
+
+proc LOWMC_ROUND_OFFLINE:
+  inputs: lsk_1_[0:1], lsk_2_[0:1], lsk_3_[0:1], lsk_4_[0:1], lsk_5_[0:1], lsk_6_[0:1], lsk_7_[0:1], lsk_8_[0:1], lsk_9_[0:1], prstin_1_[0:1], prstin_2_[0:1], prstin_3_[0:1], prstin_4_[0:1], prstin_5_[0:1], prstin_6_[0:1], prstin_7_[0:1], prstin_8_[0:1], prstin_9_[0:1], stin_1_[0:1], stin_2_[0:1], stin_3_[0:1], stin_4_[0:1], stin_5_[0:1], stin_6_[0:1], stin_7_[0:1], stin_8_[0:1], stin_9_[0:1], helper_P1_1_[0:1], helper_P2_1_[0:1], helper_P3_1_[0:1], helper_P1_2_[0:1], helper_P2_2_[0:1], helper_P3_2_[0:1], helper_P1_3_[0:1], helper_P2_3_[0:1], helper_P3_3_[0:1], helper_P1_4_[0:1], helper_P2_4_[0:1], helper_P3_4_[0:1], helper_P1_5_[0:1], helper_P2_5_[0:1], helper_P3_5_[0:1], helper_P1_6_[0:1], helper_P2_6_[0:1], helper_P3_6_[0:1], helper_P1_7_[0:1], helper_P2_7_[0:1], helper_P3_7_[0:1], helper_P1_8_[0:1], helper_P2_8_[0:1], helper_P3_8_[0:1], helper_P1_9_[0:1], helper_P2_9_[0:1], helper_P3_9_[0:1]
+
+  outputs: helper_P4_1_[0:1], helper_P4_2_[0:1], helper_P4_3_[0:1], helper_P4_4_[0:1], helper_P4_5_[0:1], helper_P4_6_[0:1], helper_P4_7_[0:1], helper_P4_8_[0:1], helper_P4_9_[0:1]
+
+  shares: stout_1_[0:1], stout_2_[0:1], stout_3_[0:1], stout_4_[0:1], stout_5_[0:1], stout_6_[0:1], stout_7_[0:1], stout_8_[0:1], stout_9_[0:1], stouttmp_1_[0:1], stouttmp_2_[0:1], stouttmp_3_[0:1], stouttmp_4_[0:1], stouttmp_5_[0:1], stouttmp_6_[0:1], stouttmp_7_[0:1], stouttmp_8_[0:1], stouttmp_9_[0:1], rk_1_[0:1], rk_2_[0:1], rk_3_[0:1], rk_4_[0:1], rk_5_[0:1], rk_6_[0:1], rk_7_[0:1], rk_8_[0:1], rk_9_[0:1];
+(rk_1_, rk_2_, rk_3_, rk_4_, rk_5_, rk_6_, rk_7_, rk_8_, rk_9_) = AFFINE(lsk_1_, lsk_2_, lsk_3_, lsk_4_, lsk_5_, lsk_6_, lsk_7_, lsk_8_, lsk_9_);
+stouttmp_1_ := prstin_1_ + rk_1_;
+stouttmp_2_ := prstin_2_ + rk_2_;
+stouttmp_3_ := prstin_3_ + rk_3_;
+stouttmp_4_ := prstin_4_ + rk_4_;
+stouttmp_5_ := prstin_5_ + rk_5_;
+stouttmp_6_ := prstin_6_ + rk_6_;
+stouttmp_7_ := prstin_7_ + rk_7_;
+stouttmp_8_ := prstin_8_ + rk_8_;
+stouttmp_9_ := prstin_9_ + rk_9_;
+(stout_1_, stout_2_, stout_3_, stout_4_, stout_5_, stout_6_, stout_7_, stout_8_, stout_9_) = AFFINE(stouttmp_1_, stouttmp_2_, stouttmp_3_, stouttmp_4_, stouttmp_5_, stouttmp_6_, stouttmp_7_, stouttmp_8_, stouttmp_9_);
+(helper_P4_1_, helper_P4_2_, helper_P4_3_) = SBOX_OFFLINE(stin_1_, stin_2_, stin_3_, stout_1_, stout_2_, stout_3_, helper_P1_1_, helper_P1_2_, helper_P1_3_, helper_P2_1_, helper_P2_2_, helper_P2_3_, helper_P3_1_, helper_P3_2_, helper_P3_3_);
+(helper_P4_4_, helper_P4_5_, helper_P4_6_) = SBOX_OFFLINE(stin_4_, stin_5_, stin_6_, stout_4_, stout_5_, stout_6_, helper_P1_4_, helper_P1_5_, helper_P1_6_, helper_P2_4_, helper_P2_5_, helper_P2_6_, helper_P3_4_, helper_P3_5_, helper_P3_6_);
+(helper_P4_7_, helper_P4_8_, helper_P4_9_) = SBOX_OFFLINE(stin_7_, stin_8_, stin_9_, stout_7_, stout_8_, stout_9_, helper_P1_7_, helper_P1_8_, helper_P1_9_, helper_P2_7_, helper_P2_8_, helper_P2_9_, helper_P3_7_, helper_P3_8_, helper_P3_9_);
+end
+
+proc PICNIC_OFFLINE:
+  inputs: r1_tape_P1_1_[0:1], r1_tape_P2_1_[0:1], r1_tape_P3_1_[0:1], r1_tape_P4_1_[0:1], r1_tape_P1_2_[0:1], r1_tape_P2_2_[0:1], r1_tape_P3_2_[0:1], r1_tape_P4_2_[0:1], r1_tape_P1_3_[0:1], r1_tape_P2_3_[0:1], r1_tape_P3_3_[0:1], r1_tape_P4_3_[0:1], r1_tape_P1_4_[0:1], r1_tape_P2_4_[0:1], r1_tape_P3_4_[0:1], r1_tape_P4_4_[0:1], r1_tape_P1_5_[0:1], r1_tape_P2_5_[0:1], r1_tape_P3_5_[0:1], r1_tape_P4_5_[0:1], r1_tape_P1_6_[0:1], r1_tape_P2_6_[0:1], r1_tape_P3_6_[0:1], r1_tape_P4_6_[0:1], r1_tape_P1_7_[0:1], r1_tape_P2_7_[0:1], r1_tape_P3_7_[0:1], r1_tape_P4_7_[0:1], r1_tape_P1_8_[0:1], r1_tape_P2_8_[0:1], r1_tape_P3_8_[0:1], r1_tape_P4_8_[0:1], r1_tape_P1_9_[0:1], r1_tape_P2_9_[0:1], r1_tape_P3_9_[0:1], r1_tape_P4_9_[0:1], 
+r2_tape_P1_1_[0:1], r2_tape_P2_1_[0:1], r2_tape_P3_1_[0:1], r2_tape_P4_1_[0:1], r2_tape_P1_2_[0:1], r2_tape_P2_2_[0:1], r2_tape_P3_2_[0:1], r2_tape_P4_2_[0:1], r2_tape_P1_3_[0:1], r2_tape_P2_3_[0:1], r2_tape_P3_3_[0:1], r2_tape_P4_3_[0:1], r2_tape_P1_4_[0:1], r2_tape_P2_4_[0:1], r2_tape_P3_4_[0:1], r2_tape_P4_4_[0:1], r2_tape_P1_5_[0:1], r2_tape_P2_5_[0:1], r2_tape_P3_5_[0:1], r2_tape_P4_5_[0:1], r2_tape_P1_6_[0:1], r2_tape_P2_6_[0:1], r2_tape_P3_6_[0:1], r2_tape_P4_6_[0:1], r2_tape_P1_7_[0:1], r2_tape_P2_7_[0:1], r2_tape_P3_7_[0:1], r2_tape_P4_7_[0:1], r2_tape_P1_8_[0:1], r2_tape_P2_8_[0:1], r2_tape_P3_8_[0:1], r2_tape_P4_8_[0:1], r2_tape_P1_9_[0:1], r2_tape_P2_9_[0:1], r2_tape_P3_9_[0:1], r2_tape_P4_9_[0:1], 
+r3_tape_P1_1_[0:1], r3_tape_P2_1_[0:1], r3_tape_P3_1_[0:1], r3_tape_P4_1_[0:1], r3_tape_P1_2_[0:1], r3_tape_P2_2_[0:1], r3_tape_P3_2_[0:1], r3_tape_P4_2_[0:1], r3_tape_P1_3_[0:1], r3_tape_P2_3_[0:1], r3_tape_P3_3_[0:1], r3_tape_P4_3_[0:1], r3_tape_P1_4_[0:1], r3_tape_P2_4_[0:1], r3_tape_P3_4_[0:1], r3_tape_P4_4_[0:1], r3_tape_P1_5_[0:1], r3_tape_P2_5_[0:1], r3_tape_P3_5_[0:1], r3_tape_P4_5_[0:1], r3_tape_P1_6_[0:1], r3_tape_P2_6_[0:1], r3_tape_P3_6_[0:1], r3_tape_P4_6_[0:1], r3_tape_P1_7_[0:1], r3_tape_P2_7_[0:1], r3_tape_P3_7_[0:1], r3_tape_P4_7_[0:1], r3_tape_P1_8_[0:1], r3_tape_P2_8_[0:1], r3_tape_P3_8_[0:1], r3_tape_P4_8_[0:1], r3_tape_P1_9_[0:1], r3_tape_P2_9_[0:1], r3_tape_P3_9_[0:1], r3_tape_P4_9_[0:1], 
+
+r1_helper_P1_1_[0:1], r1_helper_P2_1_[0:1], r1_helper_P3_1_[0:1], r1_helper_P1_2_[0:1], r1_helper_P2_2_[0:1], r1_helper_P3_2_[0:1], r1_helper_P1_3_[0:1], r1_helper_P2_3_[0:1], r1_helper_P3_3_[0:1], r1_helper_P1_4_[0:1], r1_helper_P2_4_[0:1], r1_helper_P3_4_[0:1], r1_helper_P1_5_[0:1], r1_helper_P2_5_[0:1], r1_helper_P3_5_[0:1], r1_helper_P1_6_[0:1], r1_helper_P2_6_[0:1], r1_helper_P3_6_[0:1], r1_helper_P1_7_[0:1], r1_helper_P2_7_[0:1], r1_helper_P3_7_[0:1], r1_helper_P1_8_[0:1], r1_helper_P2_8_[0:1], r1_helper_P3_8_[0:1], r1_helper_P1_9_[0:1], r1_helper_P2_9_[0:1], r1_helper_P3_9_[0:1], 
+r2_helper_P1_1_[0:1], r2_helper_P2_1_[0:1], r2_helper_P3_1_[0:1], r2_helper_P1_2_[0:1], r2_helper_P2_2_[0:1], r2_helper_P3_2_[0:1], r2_helper_P1_3_[0:1], r2_helper_P2_3_[0:1], r2_helper_P3_3_[0:1], r2_helper_P1_4_[0:1], r2_helper_P2_4_[0:1], r2_helper_P3_4_[0:1], r2_helper_P1_5_[0:1], r2_helper_P2_5_[0:1], r2_helper_P3_5_[0:1], r2_helper_P1_6_[0:1], r2_helper_P2_6_[0:1], r2_helper_P3_6_[0:1], r2_helper_P1_7_[0:1], r2_helper_P2_7_[0:1], r2_helper_P3_7_[0:1], r2_helper_P1_8_[0:1], r2_helper_P2_8_[0:1], r2_helper_P3_8_[0:1], r2_helper_P1_9_[0:1], r2_helper_P2_9_[0:1], r2_helper_P3_9_[0:1], 
+r3_helper_P1_1_[0:1], r3_helper_P2_1_[0:1], r3_helper_P3_1_[0:1], r3_helper_P1_2_[0:1], r3_helper_P2_2_[0:1], r3_helper_P3_2_[0:1], r3_helper_P1_3_[0:1], r3_helper_P2_3_[0:1], r3_helper_P3_3_[0:1], r3_helper_P1_4_[0:1], r3_helper_P2_4_[0:1], r3_helper_P3_4_[0:1], r3_helper_P1_5_[0:1], r3_helper_P2_5_[0:1], r3_helper_P3_5_[0:1], r3_helper_P1_6_[0:1], r3_helper_P2_6_[0:1], r3_helper_P3_6_[0:1], r3_helper_P1_7_[0:1], r3_helper_P2_7_[0:1], r3_helper_P3_7_[0:1], r3_helper_P1_8_[0:1], r3_helper_P2_8_[0:1], r3_helper_P3_8_[0:1], r3_helper_P1_9_[0:1], r3_helper_P2_9_[0:1], r3_helper_P3_9_[0:1], 
+
+r4_stin_1_[0:1], r4_stin_2_[0:1], r4_stin_3_[0:1], r4_stin_4_[0:1], r4_stin_5_[0:1], r4_stin_6_[0:1], r4_stin_7_[0:1], r4_stin_8_[0:1], r4_stin_9_[0:1]
+
+  outputs: r1_helper_P4_1_[0:1], r1_helper_P4_2_[0:1], r1_helper_P4_3_[0:1], r1_helper_P4_4_[0:1], r1_helper_P4_5_[0:1], r1_helper_P4_6_[0:1], r1_helper_P4_7_[0:1], r1_helper_P4_8_[0:1], r1_helper_P4_9_[0:1], 
+r2_helper_P4_1_[0:1], r2_helper_P4_2_[0:1], r2_helper_P4_3_[0:1], r2_helper_P4_4_[0:1], r2_helper_P4_5_[0:1], r2_helper_P4_6_[0:1], r2_helper_P4_7_[0:1], r2_helper_P4_8_[0:1], r2_helper_P4_9_[0:1], 
+r3_helper_P4_1_[0:1], r3_helper_P4_2_[0:1], r3_helper_P4_3_[0:1], r3_helper_P4_4_[0:1], r3_helper_P4_5_[0:1], r3_helper_P4_6_[0:1], r3_helper_P4_7_[0:1], r3_helper_P4_8_[0:1], r3_helper_P4_9_[0:1], 
+
+lsk_1_[0:1], lsk_2_[0:1], lsk_3_[0:1], lsk_4_[0:1], lsk_5_[0:1], lsk_6_[0:1], lsk_7_[0:1], lsk_8_[0:1], lsk_9_[0:1]
+  shares: r0_rk_1_[0:1], r0_rk_2_[0:1], r0_rk_3_[0:1], r0_rk_4_[0:1], r0_rk_5_[0:1], r0_rk_6_[0:1], r0_rk_7_[0:1], r0_rk_8_[0:1], r0_rk_9_[0:1], r1_stin_1_[0:1] , r1_stin_2_[0:1] , r1_stin_3_[0:1] , r1_stin_4_[0:1] , r1_stin_5_[0:1] , r1_stin_6_[0:1] , r1_stin_7_[0:1] , r1_stin_8_[0:1] , r1_stin_9_[0:1] , 
+r2_stin_1_[0:1] , r2_stin_2_[0:1] , r2_stin_3_[0:1] , r2_stin_4_[0:1] , r2_stin_5_[0:1] , r2_stin_6_[0:1] , r2_stin_7_[0:1] , r2_stin_8_[0:1] , r2_stin_9_[0:1] , 
+r3_stin_1_[0:1] , r3_stin_2_[0:1] , r3_stin_3_[0:1] , r3_stin_4_[0:1] , r3_stin_5_[0:1] , r3_stin_6_[0:1] , r3_stin_7_[0:1] , r3_stin_8_[0:1] , r3_stin_9_[0:1] ;
+
+
+(* extract initial key *)
+r0_rk_1_ = PARITY_N(r1_tape_P1_1_, r1_tape_P2_1_, r1_tape_P3_1_, r1_tape_P4_1_);
+r0_rk_2_ = PARITY_N(r1_tape_P1_2_, r1_tape_P2_2_, r1_tape_P3_2_, r1_tape_P4_2_);
+r0_rk_3_ = PARITY_N(r1_tape_P1_3_, r1_tape_P2_3_, r1_tape_P3_3_, r1_tape_P4_3_);
+r0_rk_4_ = PARITY_N(r1_tape_P1_4_, r1_tape_P2_4_, r1_tape_P3_4_, r1_tape_P4_4_);
+r0_rk_5_ = PARITY_N(r1_tape_P1_5_, r1_tape_P2_5_, r1_tape_P3_5_, r1_tape_P4_5_);
+r0_rk_6_ = PARITY_N(r1_tape_P1_6_, r1_tape_P2_6_, r1_tape_P3_6_, r1_tape_P4_6_);
+r0_rk_7_ = PARITY_N(r1_tape_P1_7_, r1_tape_P2_7_, r1_tape_P3_7_, r1_tape_P4_7_);
+r0_rk_8_ = PARITY_N(r1_tape_P1_8_, r1_tape_P2_8_, r1_tape_P3_8_, r1_tape_P4_8_);
+r0_rk_9_ = PARITY_N(r1_tape_P1_9_, r1_tape_P2_9_, r1_tape_P3_9_, r1_tape_P4_9_);
+(* re-compute secret key masks: lsk = K^-1*r0_rk *)
+(lsk_1_, lsk_2_, lsk_3_, lsk_4_, lsk_5_, lsk_6_, lsk_7_, lsk_8_, lsk_9_) = AFFINE(r0_rk_1_, r0_rk_2_, r0_rk_3_, r0_rk_4_, r0_rk_5_, r0_rk_6_, r0_rk_7_, r0_rk_8_, r0_rk_9_);
+
+(* round 3 *)
+r3_stin_1_ = PARITY_N(r3_tape_P1_1_, r3_tape_P2_1_, r3_tape_P3_1_, r3_tape_P4_1_);
+r3_stin_2_ = PARITY_N(r3_tape_P1_2_, r3_tape_P2_2_, r3_tape_P3_2_, r3_tape_P4_2_);
+r3_stin_3_ = PARITY_N(r3_tape_P1_3_, r3_tape_P2_3_, r3_tape_P3_3_, r3_tape_P4_3_);
+r3_stin_4_ = PARITY_N(r3_tape_P1_4_, r3_tape_P2_4_, r3_tape_P3_4_, r3_tape_P4_4_);
+r3_stin_5_ = PARITY_N(r3_tape_P1_5_, r3_tape_P2_5_, r3_tape_P3_5_, r3_tape_P4_5_);
+r3_stin_6_ = PARITY_N(r3_tape_P1_6_, r3_tape_P2_6_, r3_tape_P3_6_, r3_tape_P4_6_);
+r3_stin_7_ = PARITY_N(r3_tape_P1_7_, r3_tape_P2_7_, r3_tape_P3_7_, r3_tape_P4_7_);
+r3_stin_8_ = PARITY_N(r3_tape_P1_8_, r3_tape_P2_8_, r3_tape_P3_8_, r3_tape_P4_8_);
+r3_stin_9_ = PARITY_N(r3_tape_P1_9_, r3_tape_P2_9_, r3_tape_P3_9_, r3_tape_P4_9_);
+(r3_helper_P4_1_, r3_helper_P4_2_, r3_helper_P4_3_, r3_helper_P4_4_, r3_helper_P4_5_, r3_helper_P4_6_, r3_helper_P4_7_, r3_helper_P4_8_, r3_helper_P4_9_) = LOWMC_ROUND_OFFLINE(lsk_1_, lsk_2_, lsk_3_, lsk_4_, lsk_5_, lsk_6_, lsk_7_, lsk_8_, lsk_9_, r4_stin_1_, r4_stin_2_, r4_stin_3_, r4_stin_4_, r4_stin_5_, r4_stin_6_, r4_stin_7_, r4_stin_8_, r4_stin_9_, r3_stin_1_, r3_stin_2_, r3_stin_3_, r3_stin_4_, r3_stin_5_, r3_stin_6_, r3_stin_7_, r3_stin_8_, r3_stin_9_, r3_helper_P1_1_, r3_helper_P2_1_, r3_helper_P3_1_, r3_helper_P1_2_, r3_helper_P2_2_, r3_helper_P3_2_, r3_helper_P1_3_, r3_helper_P2_3_, r3_helper_P3_3_, r3_helper_P1_4_, r3_helper_P2_4_, r3_helper_P3_4_, r3_helper_P1_5_, r3_helper_P2_5_, r3_helper_P3_5_, r3_helper_P1_6_, r3_helper_P2_6_, r3_helper_P3_6_, r3_helper_P1_7_, r3_helper_P2_7_, r3_helper_P3_7_, r3_helper_P1_8_, r3_helper_P2_8_, r3_helper_P3_8_, r3_helper_P1_9_, r3_helper_P2_9_, r3_helper_P3_9_);
+
+(* round 2 *)
+r2_stin_1_ = PARITY_N(r2_tape_P1_1_, r2_tape_P2_1_, r2_tape_P3_1_, r2_tape_P4_1_);
+r2_stin_2_ = PARITY_N(r2_tape_P1_2_, r2_tape_P2_2_, r2_tape_P3_2_, r2_tape_P4_2_);
+r2_stin_3_ = PARITY_N(r2_tape_P1_3_, r2_tape_P2_3_, r2_tape_P3_3_, r2_tape_P4_3_);
+r2_stin_4_ = PARITY_N(r2_tape_P1_4_, r2_tape_P2_4_, r2_tape_P3_4_, r2_tape_P4_4_);
+r2_stin_5_ = PARITY_N(r2_tape_P1_5_, r2_tape_P2_5_, r2_tape_P3_5_, r2_tape_P4_5_);
+r2_stin_6_ = PARITY_N(r2_tape_P1_6_, r2_tape_P2_6_, r2_tape_P3_6_, r2_tape_P4_6_);
+r2_stin_7_ = PARITY_N(r2_tape_P1_7_, r2_tape_P2_7_, r2_tape_P3_7_, r2_tape_P4_7_);
+r2_stin_8_ = PARITY_N(r2_tape_P1_8_, r2_tape_P2_8_, r2_tape_P3_8_, r2_tape_P4_8_);
+r2_stin_9_ = PARITY_N(r2_tape_P1_9_, r2_tape_P2_9_, r2_tape_P3_9_, r2_tape_P4_9_);
+(r2_helper_P4_1_, r2_helper_P4_2_, r2_helper_P4_3_, r2_helper_P4_4_, r2_helper_P4_5_, r2_helper_P4_6_, r2_helper_P4_7_, r2_helper_P4_8_, r2_helper_P4_9_) = LOWMC_ROUND_OFFLINE(lsk_1_, lsk_2_, lsk_3_, lsk_4_, lsk_5_, lsk_6_, lsk_7_, lsk_8_, lsk_9_, r3_stin_1_, r3_stin_2_, r3_stin_3_, r3_stin_4_, r3_stin_5_, r3_stin_6_, r3_stin_7_, r3_stin_8_, r3_stin_9_, r2_stin_1_, r2_stin_2_, r2_stin_3_, r2_stin_4_, r2_stin_5_, r2_stin_6_, r2_stin_7_, r2_stin_8_, r2_stin_9_, r2_helper_P1_1_, r2_helper_P2_1_, r2_helper_P3_1_, r2_helper_P1_2_, r2_helper_P2_2_, r2_helper_P3_2_, r2_helper_P1_3_, r2_helper_P2_3_, r2_helper_P3_3_, r2_helper_P1_4_, r2_helper_P2_4_, r2_helper_P3_4_, r2_helper_P1_5_, r2_helper_P2_5_, r2_helper_P3_5_, r2_helper_P1_6_, r2_helper_P2_6_, r2_helper_P3_6_, r2_helper_P1_7_, r2_helper_P2_7_, r2_helper_P3_7_, r2_helper_P1_8_, r2_helper_P2_8_, r2_helper_P3_8_, r2_helper_P1_9_, r2_helper_P2_9_, r2_helper_P3_9_);
+
+(* round 1 *)
+r1_stin_1_ := r0_rk_1_;
+r1_stin_2_ := r0_rk_2_;
+r1_stin_3_ := r0_rk_3_;
+r1_stin_4_ := r0_rk_4_;
+r1_stin_5_ := r0_rk_5_;
+r1_stin_6_ := r0_rk_6_;
+r1_stin_7_ := r0_rk_7_;
+r1_stin_8_ := r0_rk_8_;
+r1_stin_9_ := r0_rk_9_;
+(r1_helper_P4_1_, r1_helper_P4_2_, r1_helper_P4_3_, r1_helper_P4_4_, r1_helper_P4_5_, r1_helper_P4_6_, r1_helper_P4_7_, r1_helper_P4_8_, r1_helper_P4_9_) = LOWMC_ROUND_OFFLINE(lsk_1_, lsk_2_, lsk_3_, lsk_4_, lsk_5_, lsk_6_, lsk_7_, lsk_8_, lsk_9_, r2_stin_1_, r2_stin_2_, r2_stin_3_, r2_stin_4_, r2_stin_5_, r2_stin_6_, r2_stin_7_, r2_stin_8_, r2_stin_9_, r1_stin_1_, r1_stin_2_, r1_stin_3_, r1_stin_4_, r1_stin_5_, r1_stin_6_, r1_stin_7_, r1_stin_8_, r1_stin_9_, r1_helper_P1_1_, r1_helper_P2_1_, r1_helper_P3_1_, r1_helper_P1_2_, r1_helper_P2_2_, r1_helper_P3_2_, r1_helper_P1_3_, r1_helper_P2_3_, r1_helper_P3_3_, r1_helper_P1_4_, r1_helper_P2_4_, r1_helper_P3_4_, r1_helper_P1_5_, r1_helper_P2_5_, r1_helper_P3_5_, r1_helper_P1_6_, r1_helper_P2_6_, r1_helper_P3_6_, r1_helper_P1_7_, r1_helper_P2_7_, r1_helper_P3_7_, r1_helper_P1_8_, r1_helper_P2_8_, r1_helper_P3_8_, r1_helper_P1_9_, r1_helper_P2_9_, r1_helper_P3_9_);
+
+end
+
+proc PICNIC_AND_ONLINE:
+  inputs: hx[0:1], hy[0:1], lx_1_[0:1], lx_2_[0:1], lx_3_[0:1], lx_4_[0:1], ly_1_[0:1], ly_2_[0:1], ly_3_[0:1], ly_4_[0:1], helper_P1_[0:1], helper_P2_[0:1], helper_P3_[0:1], helper_P4_[0:1]
+  outputs: hz[0:1], s_1_[0:1], s_2_[0:1], s_3_[0:1], s_4_[0:1]
+  shares: a_1_[0:1], a_2_[0:1], a_3_[0:1], a_4_[0:1], b_1_[0:1], b_2_[0:1], b_3_[0:1], b_4_[0:1], c[0:1], s[0:1];
+
+a_1_ = AND(hx, ly_1_);
+b_1_ = AND(hy, lx_1_);
+s_1_ := a_1_ + b_1_;
+s_1_ := s_1_ + helper_P1_;
+a_2_ = AND(hx, ly_2_);
+b_2_ = AND(hy, lx_2_);
+s_2_ := a_2_ + b_2_;
+s_2_ := s_2_ + helper_P2_;
+a_3_ = AND(hx, ly_3_);
+b_3_ = AND(hy, lx_3_);
+s_3_ := a_3_ + b_3_;
+s_3_ := s_3_ + helper_P3_;
+a_4_ = AND(hx, ly_4_);
+b_4_ = AND(hy, lx_4_);
+s_4_ := a_4_ + b_4_;
+s_4_ := s_4_ + helper_P4_;
+c = AND(hx, hy);
+s := s_1_ + s_2_;
+s := s + s_3_;
+s := s + s_4_;
+hz := c + s;
+end
+
+proc SBOX_ONLINE:
+  inputs: hc[0:1], hb[0:1], ha[0:1], lc_1_[0:1], lb_1_[0:1], la_1_[0:1], lc_2_[0:1], lb_2_[0:1], la_2_[0:1], lc_3_[0:1], lb_3_[0:1], la_3_[0:1], lc_4_[0:1], lb_4_[0:1], la_4_[0:1], helper_P1_ab[0:1], helper_P1_ca[0:1], helper_P1_bc[0:1], helper_P2_ab[0:1], helper_P2_ca[0:1], helper_P2_bc[0:1], helper_P3_ab[0:1], helper_P3_ca[0:1], helper_P3_bc[0:1], helper_P4_ab[0:1], helper_P4_ca[0:1], helper_P4_bc[0:1]  
+  outputs: hf[0:1], he[0:1], hd[0:1], s_ab_1_[0:1], s_ab_2_[0:1], s_ab_3_[0:1], s_ab_4_[0:1], s_ca_1_[0:1], s_ca_2_[0:1], s_ca_3_[0:1], s_ca_4_[0:1], s_bc_1_[0:1], s_bc_2_[0:1], s_bc_3_[0:1], s_bc_4_[0:1] 
+  shares: hab[0:1], hca[0:1], hbc[0:1] ;
+(hab, s_ab_1_, s_ab_2_, s_ab_3_, s_ab_4_) = PICNIC_AND_ONLINE(ha, hb, la_1_, la_2_, la_3_, la_4_, lb_1_, lb_2_, lb_3_, lb_4_, helper_P1_ab, helper_P2_ab, helper_P3_ab, helper_P4_ab);
+
+(hbc, s_bc_1_, s_bc_2_, s_bc_3_, s_bc_4_) = PICNIC_AND_ONLINE(hb, hc, lb_1_, lb_2_, lb_3_, lb_4_, lc_1_, lc_2_, lc_3_, lc_4_, helper_P1_bc, helper_P2_bc, helper_P3_bc, helper_P4_bc);
+
+(hca, s_ca_1_, s_ca_2_, s_ca_3_, s_ca_4_) = PICNIC_AND_ONLINE(hc, ha, lc_1_, lc_2_, lc_3_, lc_4_, la_1_, la_2_, la_3_, la_4_, helper_P1_ca, helper_P2_ca, helper_P3_ca, helper_P4_ca);
+
+hf := ha + hb;
+hf := hf + hc;
+hf := hf + hab;
+he := ha + hb;
+he := he + hca;
+hd := ha + hbc;
+end
+
+proc LOWMC_ROUND_ONLINE:
+  inputs: hsk_1_[0:1], hsk_2_[0:1], hsk_3_[0:1], hsk_4_[0:1], hsk_5_[0:1], hsk_6_[0:1], hsk_7_[0:1], hsk_8_[0:1], hsk_9_[0:1], 
+stin_1_[0:1], stin_2_[0:1], stin_3_[0:1], stin_4_[0:1], stin_5_[0:1], stin_6_[0:1], stin_7_[0:1], stin_8_[0:1], stin_9_[0:1], 
+tape_P1_1_[0:1], tape_P2_1_[0:1], tape_P3_1_[0:1], tape_P4_1_[0:1], tape_P1_2_[0:1], tape_P2_2_[0:1], tape_P3_2_[0:1], tape_P4_2_[0:1], tape_P1_3_[0:1], tape_P2_3_[0:1], tape_P3_3_[0:1], tape_P4_3_[0:1], tape_P1_4_[0:1], tape_P2_4_[0:1], tape_P3_4_[0:1], tape_P4_4_[0:1], tape_P1_5_[0:1], tape_P2_5_[0:1], tape_P3_5_[0:1], tape_P4_5_[0:1], tape_P1_6_[0:1], tape_P2_6_[0:1], tape_P3_6_[0:1], tape_P4_6_[0:1], tape_P1_7_[0:1], tape_P2_7_[0:1], tape_P3_7_[0:1], tape_P4_7_[0:1], tape_P1_8_[0:1], tape_P2_8_[0:1], tape_P3_8_[0:1], tape_P4_8_[0:1], tape_P1_9_[0:1], tape_P2_9_[0:1], tape_P3_9_[0:1], tape_P4_9_[0:1], helper_P1_1_[0:1], helper_P2_1_[0:1], helper_P3_1_[0:1], helper_P4_1_[0:1], helper_P1_2_[0:1], helper_P2_2_[0:1], helper_P3_2_[0:1], helper_P4_2_[0:1], helper_P1_3_[0:1], helper_P2_3_[0:1], helper_P3_3_[0:1], helper_P4_3_[0:1], helper_P1_4_[0:1], helper_P2_4_[0:1], helper_P3_4_[0:1], helper_P4_4_[0:1], helper_P1_5_[0:1], helper_P2_5_[0:1], helper_P3_5_[0:1], helper_P4_5_[0:1], helper_P1_6_[0:1], helper_P2_6_[0:1], helper_P3_6_[0:1], helper_P4_6_[0:1], helper_P1_7_[0:1], helper_P2_7_[0:1], helper_P3_7_[0:1], helper_P4_7_[0:1], helper_P1_8_[0:1], helper_P2_8_[0:1], helper_P3_8_[0:1], helper_P4_8_[0:1], helper_P1_9_[0:1], helper_P2_9_[0:1], helper_P3_9_[0:1], helper_P4_9_[0:1]
+
+  outputs: stout_1_[0:1], stout_2_[0:1], stout_3_[0:1], stout_4_[0:1], stout_5_[0:1], stout_6_[0:1], stout_7_[0:1], stout_8_[0:1], stout_9_[0:1], 
+msgs_P1_1_[0:1], msgs_P2_1_[0:1], msgs_P3_1_[0:1], msgs_P4_1_[0:1], msgs_P1_2_[0:1], msgs_P2_2_[0:1], msgs_P3_2_[0:1], msgs_P4_2_[0:1], msgs_P1_3_[0:1], msgs_P2_3_[0:1], msgs_P3_3_[0:1], msgs_P4_3_[0:1], msgs_P1_4_[0:1], msgs_P2_4_[0:1], msgs_P3_4_[0:1], msgs_P4_4_[0:1], msgs_P1_5_[0:1], msgs_P2_5_[0:1], msgs_P3_5_[0:1], msgs_P4_5_[0:1], msgs_P1_6_[0:1], msgs_P2_6_[0:1], msgs_P3_6_[0:1], msgs_P4_6_[0:1], msgs_P1_7_[0:1], msgs_P2_7_[0:1], msgs_P3_7_[0:1], msgs_P4_7_[0:1], msgs_P1_8_[0:1], msgs_P2_8_[0:1], msgs_P3_8_[0:1], msgs_P4_8_[0:1], msgs_P1_9_[0:1], msgs_P2_9_[0:1], msgs_P3_9_[0:1], msgs_P4_9_[0:1]
+
+  shares: sbout_1_[0:1], sbout_2_[0:1], sbout_3_[0:1], sbout_4_[0:1], sbout_5_[0:1], sbout_6_[0:1], sbout_7_[0:1], sbout_8_[0:1], sbout_9_[0:1], 
+mmout_1_[0:1], mmout_2_[0:1], mmout_3_[0:1], mmout_4_[0:1], mmout_5_[0:1], mmout_6_[0:1], mmout_7_[0:1], mmout_8_[0:1], mmout_9_[0:1], 
+rk_1_[0:1], rk_2_[0:1], rk_3_[0:1], rk_4_[0:1], rk_5_[0:1], rk_6_[0:1], rk_7_[0:1], rk_8_[0:1], rk_9_[0:1], 
+stouttmp_1_[0:1] , stouttmp_2_[0:1] , stouttmp_3_[0:1] , stouttmp_4_[0:1] , stouttmp_5_[0:1] , stouttmp_6_[0:1] , stouttmp_7_[0:1] , stouttmp_8_[0:1] , stouttmp_9_[0:1] 
+;
+(* sbox layer *)
+(sbout_1_, sbout_2_, sbout_3_, msgs_P1_1_, msgs_P2_1_, msgs_P3_1_, msgs_P4_1_, msgs_P1_2_, msgs_P2_2_, msgs_P3_2_, msgs_P4_2_, msgs_P1_3_, msgs_P2_3_, msgs_P3_3_, msgs_P4_3_) = SBOX_ONLINE(stin_1_, stin_2_, stin_3_, tape_P1_1_, tape_P1_2_, tape_P1_3_, tape_P2_1_, tape_P2_2_, tape_P2_3_, tape_P3_1_, tape_P3_2_, tape_P3_3_, tape_P4_1_, tape_P4_2_, tape_P4_3_, helper_P1_1_, helper_P1_2_, helper_P1_3_, helper_P2_1_, helper_P2_2_, helper_P2_3_, helper_P3_1_, helper_P3_2_, helper_P3_3_, helper_P4_1_, helper_P4_2_, helper_P4_3_ );
+
+(sbout_4_, sbout_5_, sbout_6_, msgs_P1_4_, msgs_P2_4_, msgs_P3_4_, msgs_P4_4_, msgs_P1_5_, msgs_P2_5_, msgs_P3_5_, msgs_P4_5_, msgs_P1_6_, msgs_P2_6_, msgs_P3_6_, msgs_P4_6_) = SBOX_ONLINE(stin_4_, stin_5_, stin_6_, tape_P1_4_, tape_P1_5_, tape_P1_6_, tape_P2_4_, tape_P2_5_, tape_P2_6_, tape_P3_4_, tape_P3_5_, tape_P3_6_, tape_P4_4_, tape_P4_5_, tape_P4_6_, helper_P1_4_, helper_P1_5_, helper_P1_6_, helper_P2_4_, helper_P2_5_, helper_P2_6_, helper_P3_4_, helper_P3_5_, helper_P3_6_, helper_P4_4_, helper_P4_5_, helper_P4_6_ );
+
+(sbout_7_, sbout_8_, sbout_9_, msgs_P1_7_, msgs_P2_7_, msgs_P3_7_, msgs_P4_7_, msgs_P1_8_, msgs_P2_8_, msgs_P3_8_, msgs_P4_8_, msgs_P1_9_, msgs_P2_9_, msgs_P3_9_, msgs_P4_9_) = SBOX_ONLINE(stin_7_, stin_8_, stin_9_, tape_P1_7_, tape_P1_8_, tape_P1_9_, tape_P2_7_, tape_P2_8_, tape_P2_9_, tape_P3_7_, tape_P3_8_, tape_P3_9_, tape_P4_7_, tape_P4_8_, tape_P4_9_, helper_P1_7_, helper_P1_8_, helper_P1_9_, helper_P2_7_, helper_P2_8_, helper_P2_9_, helper_P3_7_, helper_P3_8_, helper_P3_9_, helper_P4_7_, helper_P4_8_, helper_P4_9_ );
+
+(* affine layer *)
+(mmout_1_, mmout_2_, mmout_3_, mmout_4_, mmout_5_, mmout_6_, mmout_7_, mmout_8_, mmout_9_) = AFFINE(sbout_1_, sbout_2_, sbout_3_, sbout_4_, sbout_5_, sbout_6_, sbout_7_, sbout_8_, sbout_9_);
+
+(* key update *)
+(rk_1_, rk_2_, rk_3_, rk_4_, rk_5_, rk_6_, rk_7_, rk_8_, rk_9_) = AFFINE(hsk_1_, hsk_2_, hsk_3_, hsk_4_, hsk_5_, hsk_6_, hsk_7_, hsk_8_, hsk_9_);
+
+(* state update *)
+(* without refresh the gadget is not NI*)
+stouttmp_1_ := mmout_1_ + rk_1_;
+stout_1_ = REFM(stouttmp_1_);
+(* without refresh the gadget is not NI*)
+stouttmp_2_ := mmout_2_ + rk_2_;
+stout_2_ = REFM(stouttmp_2_);
+(* without refresh the gadget is not NI*)
+stouttmp_3_ := mmout_3_ + rk_3_;
+stout_3_ = REFM(stouttmp_3_);
+(* without refresh the gadget is not NI*)
+stouttmp_4_ := mmout_4_ + rk_4_;
+stout_4_ = REFM(stouttmp_4_);
+(* without refresh the gadget is not NI*)
+stouttmp_5_ := mmout_5_ + rk_5_;
+stout_5_ = REFM(stouttmp_5_);
+(* without refresh the gadget is not NI*)
+stouttmp_6_ := mmout_6_ + rk_6_;
+stout_6_ = REFM(stouttmp_6_);
+(* without refresh the gadget is not NI*)
+stouttmp_7_ := mmout_7_ + rk_7_;
+stout_7_ = REFM(stouttmp_7_);
+(* without refresh the gadget is not NI*)
+stouttmp_8_ := mmout_8_ + rk_8_;
+stout_8_ = REFM(stouttmp_8_);
+(* without refresh the gadget is not NI*)
+stouttmp_9_ := mmout_9_ + rk_9_;
+stout_9_ = REFM(stouttmp_9_);
+end
+
+proc PICNIC_ONLINE:
+  inputs: hsk_1_[0:1], hsk_2_[0:1], hsk_3_[0:1], hsk_4_[0:1], hsk_5_[0:1], hsk_6_[0:1], hsk_7_[0:1], hsk_8_[0:1], hsk_9_[0:1], 
+r1_tape_P1_1_[0:1], r1_tape_P2_1_[0:1], r1_tape_P3_1_[0:1], r1_tape_P4_1_[0:1], r1_tape_P1_2_[0:1], r1_tape_P2_2_[0:1], r1_tape_P3_2_[0:1], r1_tape_P4_2_[0:1], r1_tape_P1_3_[0:1], r1_tape_P2_3_[0:1], r1_tape_P3_3_[0:1], r1_tape_P4_3_[0:1], r1_tape_P1_4_[0:1], r1_tape_P2_4_[0:1], r1_tape_P3_4_[0:1], r1_tape_P4_4_[0:1], r1_tape_P1_5_[0:1], r1_tape_P2_5_[0:1], r1_tape_P3_5_[0:1], r1_tape_P4_5_[0:1], r1_tape_P1_6_[0:1], r1_tape_P2_6_[0:1], r1_tape_P3_6_[0:1], r1_tape_P4_6_[0:1], r1_tape_P1_7_[0:1], r1_tape_P2_7_[0:1], r1_tape_P3_7_[0:1], r1_tape_P4_7_[0:1], r1_tape_P1_8_[0:1], r1_tape_P2_8_[0:1], r1_tape_P3_8_[0:1], r1_tape_P4_8_[0:1], r1_tape_P1_9_[0:1], r1_tape_P2_9_[0:1], r1_tape_P3_9_[0:1], r1_tape_P4_9_[0:1], r2_tape_P1_1_[0:1], r2_tape_P2_1_[0:1], r2_tape_P3_1_[0:1], r2_tape_P4_1_[0:1], r2_tape_P1_2_[0:1], r2_tape_P2_2_[0:1], r2_tape_P3_2_[0:1], r2_tape_P4_2_[0:1], r2_tape_P1_3_[0:1], r2_tape_P2_3_[0:1], r2_tape_P3_3_[0:1], r2_tape_P4_3_[0:1], r2_tape_P1_4_[0:1], r2_tape_P2_4_[0:1], r2_tape_P3_4_[0:1], r2_tape_P4_4_[0:1], r2_tape_P1_5_[0:1], r2_tape_P2_5_[0:1], r2_tape_P3_5_[0:1], r2_tape_P4_5_[0:1], r2_tape_P1_6_[0:1], r2_tape_P2_6_[0:1], r2_tape_P3_6_[0:1], r2_tape_P4_6_[0:1], r2_tape_P1_7_[0:1], r2_tape_P2_7_[0:1], r2_tape_P3_7_[0:1], r2_tape_P4_7_[0:1], r2_tape_P1_8_[0:1], r2_tape_P2_8_[0:1], r2_tape_P3_8_[0:1], r2_tape_P4_8_[0:1], r2_tape_P1_9_[0:1], r2_tape_P2_9_[0:1], r2_tape_P3_9_[0:1], r2_tape_P4_9_[0:1], r3_tape_P1_1_[0:1], r3_tape_P2_1_[0:1], r3_tape_P3_1_[0:1], r3_tape_P4_1_[0:1], r3_tape_P1_2_[0:1], r3_tape_P2_2_[0:1], r3_tape_P3_2_[0:1], r3_tape_P4_2_[0:1], r3_tape_P1_3_[0:1], r3_tape_P2_3_[0:1], r3_tape_P3_3_[0:1], r3_tape_P4_3_[0:1], r3_tape_P1_4_[0:1], r3_tape_P2_4_[0:1], r3_tape_P3_4_[0:1], r3_tape_P4_4_[0:1], r3_tape_P1_5_[0:1], r3_tape_P2_5_[0:1], r3_tape_P3_5_[0:1], r3_tape_P4_5_[0:1], r3_tape_P1_6_[0:1], r3_tape_P2_6_[0:1], r3_tape_P3_6_[0:1], r3_tape_P4_6_[0:1], r3_tape_P1_7_[0:1], r3_tape_P2_7_[0:1], r3_tape_P3_7_[0:1], r3_tape_P4_7_[0:1], r3_tape_P1_8_[0:1], r3_tape_P2_8_[0:1], r3_tape_P3_8_[0:1], r3_tape_P4_8_[0:1], r3_tape_P1_9_[0:1], r3_tape_P2_9_[0:1], r3_tape_P3_9_[0:1], r3_tape_P4_9_[0:1], 
+r1_helper_P1_1_[0:1] , r1_helper_P2_1_[0:1] , r1_helper_P3_1_[0:1] , r1_helper_P4_1_[0:1] , r1_helper_P1_2_[0:1] , r1_helper_P2_2_[0:1] , r1_helper_P3_2_[0:1] , r1_helper_P4_2_[0:1] , r1_helper_P1_3_[0:1] , r1_helper_P2_3_[0:1] , r1_helper_P3_3_[0:1] , r1_helper_P4_3_[0:1] , r1_helper_P1_4_[0:1] , r1_helper_P2_4_[0:1] , r1_helper_P3_4_[0:1] , r1_helper_P4_4_[0:1] , r1_helper_P1_5_[0:1] , r1_helper_P2_5_[0:1] , r1_helper_P3_5_[0:1] , r1_helper_P4_5_[0:1] , r1_helper_P1_6_[0:1] , r1_helper_P2_6_[0:1] , r1_helper_P3_6_[0:1] , r1_helper_P4_6_[0:1] , r1_helper_P1_7_[0:1] , r1_helper_P2_7_[0:1] , r1_helper_P3_7_[0:1] , r1_helper_P4_7_[0:1] , r1_helper_P1_8_[0:1] , r1_helper_P2_8_[0:1] , r1_helper_P3_8_[0:1] , r1_helper_P4_8_[0:1] , r1_helper_P1_9_[0:1] , r1_helper_P2_9_[0:1] , r1_helper_P3_9_[0:1] , r1_helper_P4_9_[0:1] , r2_helper_P1_1_[0:1] , r2_helper_P2_1_[0:1] , r2_helper_P3_1_[0:1] , r2_helper_P4_1_[0:1] , r2_helper_P1_2_[0:1] , r2_helper_P2_2_[0:1] , r2_helper_P3_2_[0:1] , r2_helper_P4_2_[0:1] , r2_helper_P1_3_[0:1] , r2_helper_P2_3_[0:1] , r2_helper_P3_3_[0:1] , r2_helper_P4_3_[0:1] , r2_helper_P1_4_[0:1] , r2_helper_P2_4_[0:1] , r2_helper_P3_4_[0:1] , r2_helper_P4_4_[0:1] , r2_helper_P1_5_[0:1] , r2_helper_P2_5_[0:1] , r2_helper_P3_5_[0:1] , r2_helper_P4_5_[0:1] , r2_helper_P1_6_[0:1] , r2_helper_P2_6_[0:1] , r2_helper_P3_6_[0:1] , r2_helper_P4_6_[0:1] , r2_helper_P1_7_[0:1] , r2_helper_P2_7_[0:1] , r2_helper_P3_7_[0:1] , r2_helper_P4_7_[0:1] , r2_helper_P1_8_[0:1] , r2_helper_P2_8_[0:1] , r2_helper_P3_8_[0:1] , r2_helper_P4_8_[0:1] , r2_helper_P1_9_[0:1] , r2_helper_P2_9_[0:1] , r2_helper_P3_9_[0:1] , r2_helper_P4_9_[0:1] , r3_helper_P1_1_[0:1] , r3_helper_P2_1_[0:1] , r3_helper_P3_1_[0:1] , r3_helper_P4_1_[0:1] , r3_helper_P1_2_[0:1] , r3_helper_P2_2_[0:1] , r3_helper_P3_2_[0:1] , r3_helper_P4_2_[0:1] , r3_helper_P1_3_[0:1] , r3_helper_P2_3_[0:1] , r3_helper_P3_3_[0:1] , r3_helper_P4_3_[0:1] , r3_helper_P1_4_[0:1] , r3_helper_P2_4_[0:1] , r3_helper_P3_4_[0:1] , r3_helper_P4_4_[0:1] , r3_helper_P1_5_[0:1] , r3_helper_P2_5_[0:1] , r3_helper_P3_5_[0:1] , r3_helper_P4_5_[0:1] , r3_helper_P1_6_[0:1] , r3_helper_P2_6_[0:1] , r3_helper_P3_6_[0:1] , r3_helper_P4_6_[0:1] , r3_helper_P1_7_[0:1] , r3_helper_P2_7_[0:1] , r3_helper_P3_7_[0:1] , r3_helper_P4_7_[0:1] , r3_helper_P1_8_[0:1] , r3_helper_P2_8_[0:1] , r3_helper_P3_8_[0:1] , r3_helper_P4_8_[0:1] , r3_helper_P1_9_[0:1] , r3_helper_P2_9_[0:1] , r3_helper_P3_9_[0:1] , r3_helper_P4_9_[0:1] 
+
+
+  outputs: r1_msgs_P1_1_[0:1], r1_msgs_P2_1_[0:1], r1_msgs_P3_1_[0:1], r1_msgs_P4_1_[0:1], r1_msgs_P1_2_[0:1], r1_msgs_P2_2_[0:1], r1_msgs_P3_2_[0:1], r1_msgs_P4_2_[0:1], r1_msgs_P1_3_[0:1], r1_msgs_P2_3_[0:1], r1_msgs_P3_3_[0:1], r1_msgs_P4_3_[0:1], r1_msgs_P1_4_[0:1], r1_msgs_P2_4_[0:1], r1_msgs_P3_4_[0:1], r1_msgs_P4_4_[0:1], r1_msgs_P1_5_[0:1], r1_msgs_P2_5_[0:1], r1_msgs_P3_5_[0:1], r1_msgs_P4_5_[0:1], r1_msgs_P1_6_[0:1], r1_msgs_P2_6_[0:1], r1_msgs_P3_6_[0:1], r1_msgs_P4_6_[0:1], r1_msgs_P1_7_[0:1], r1_msgs_P2_7_[0:1], r1_msgs_P3_7_[0:1], r1_msgs_P4_7_[0:1], r1_msgs_P1_8_[0:1], r1_msgs_P2_8_[0:1], r1_msgs_P3_8_[0:1], r1_msgs_P4_8_[0:1], r1_msgs_P1_9_[0:1], r1_msgs_P2_9_[0:1], r1_msgs_P3_9_[0:1], r1_msgs_P4_9_[0:1], r2_msgs_P1_1_[0:1], r2_msgs_P2_1_[0:1], r2_msgs_P3_1_[0:1], r2_msgs_P4_1_[0:1], r2_msgs_P1_2_[0:1], r2_msgs_P2_2_[0:1], r2_msgs_P3_2_[0:1], r2_msgs_P4_2_[0:1], r2_msgs_P1_3_[0:1], r2_msgs_P2_3_[0:1], r2_msgs_P3_3_[0:1], r2_msgs_P4_3_[0:1], r2_msgs_P1_4_[0:1], r2_msgs_P2_4_[0:1], r2_msgs_P3_4_[0:1], r2_msgs_P4_4_[0:1], r2_msgs_P1_5_[0:1], r2_msgs_P2_5_[0:1], r2_msgs_P3_5_[0:1], r2_msgs_P4_5_[0:1], r2_msgs_P1_6_[0:1], r2_msgs_P2_6_[0:1], r2_msgs_P3_6_[0:1], r2_msgs_P4_6_[0:1], r2_msgs_P1_7_[0:1], r2_msgs_P2_7_[0:1], r2_msgs_P3_7_[0:1], r2_msgs_P4_7_[0:1], r2_msgs_P1_8_[0:1], r2_msgs_P2_8_[0:1], r2_msgs_P3_8_[0:1], r2_msgs_P4_8_[0:1], r2_msgs_P1_9_[0:1], r2_msgs_P2_9_[0:1], r2_msgs_P3_9_[0:1], r2_msgs_P4_9_[0:1], r3_msgs_P1_1_[0:1], r3_msgs_P2_1_[0:1], r3_msgs_P3_1_[0:1], r3_msgs_P4_1_[0:1], r3_msgs_P1_2_[0:1], r3_msgs_P2_2_[0:1], r3_msgs_P3_2_[0:1], r3_msgs_P4_2_[0:1], r3_msgs_P1_3_[0:1], r3_msgs_P2_3_[0:1], r3_msgs_P3_3_[0:1], r3_msgs_P4_3_[0:1], r3_msgs_P1_4_[0:1], r3_msgs_P2_4_[0:1], r3_msgs_P3_4_[0:1], r3_msgs_P4_4_[0:1], r3_msgs_P1_5_[0:1], r3_msgs_P2_5_[0:1], r3_msgs_P3_5_[0:1], r3_msgs_P4_5_[0:1], r3_msgs_P1_6_[0:1], r3_msgs_P2_6_[0:1], r3_msgs_P3_6_[0:1], r3_msgs_P4_6_[0:1], r3_msgs_P1_7_[0:1], r3_msgs_P2_7_[0:1], r3_msgs_P3_7_[0:1], r3_msgs_P4_7_[0:1], r3_msgs_P1_8_[0:1], r3_msgs_P2_8_[0:1], r3_msgs_P3_8_[0:1], r3_msgs_P4_8_[0:1], r3_msgs_P1_9_[0:1], r3_msgs_P2_9_[0:1], r3_msgs_P3_9_[0:1], r3_msgs_P4_9_[0:1], 
+r4_stin_1_[0:1], r4_stin_2_[0:1], r4_stin_3_[0:1], r4_stin_4_[0:1], r4_stin_5_[0:1], r4_stin_6_[0:1], r4_stin_7_[0:1], r4_stin_8_[0:1], r4_stin_9_[0:1]
+
+  shares: r0_rk_1_[0:1], r0_rk_2_[0:1], r0_rk_3_[0:1], r0_rk_4_[0:1], r0_rk_5_[0:1], r0_rk_6_[0:1], r0_rk_7_[0:1], r0_rk_8_[0:1], r0_rk_9_[0:1], r1_stin_1_[0:1], r1_stin_2_[0:1], r1_stin_3_[0:1], r1_stin_4_[0:1], r1_stin_5_[0:1], r1_stin_6_[0:1], r1_stin_7_[0:1], r1_stin_8_[0:1], r1_stin_9_[0:1], r2_stin_1_[0:1], r2_stin_2_[0:1], r2_stin_3_[0:1], r2_stin_4_[0:1], r2_stin_5_[0:1], r2_stin_6_[0:1], r2_stin_7_[0:1], r2_stin_8_[0:1], r2_stin_9_[0:1], r3_stin_1_[0:1], r3_stin_2_[0:1], r3_stin_3_[0:1], r3_stin_4_[0:1], r3_stin_5_[0:1], r3_stin_6_[0:1], r3_stin_7_[0:1], r3_stin_8_[0:1], r3_stin_9_[0:1];
+
+(* key init *)
+(r0_rk_1_, r0_rk_2_, r0_rk_3_, r0_rk_4_, r0_rk_5_, r0_rk_6_, r0_rk_7_, r0_rk_8_, r0_rk_9_) = AFFINE(hsk_1_, hsk_2_, hsk_3_, hsk_4_, hsk_5_, hsk_6_, hsk_7_, hsk_8_, hsk_9_);
+r1_stin_1_ = REFM(r0_rk_1_);
+r1_stin_2_ = REFM(r0_rk_2_);
+r1_stin_3_ = REFM(r0_rk_3_);
+r1_stin_4_ = REFM(r0_rk_4_);
+r1_stin_5_ = REFM(r0_rk_5_);
+r1_stin_6_ = REFM(r0_rk_6_);
+r1_stin_7_ = REFM(r0_rk_7_);
+r1_stin_8_ = REFM(r0_rk_8_);
+r1_stin_9_ = REFM(r0_rk_9_);
+
+(* round 1 *)
+(r2_stin_1_,r2_stin_2_,r2_stin_3_,r2_stin_4_,r2_stin_5_,r2_stin_6_,r2_stin_7_,r2_stin_8_,r2_stin_9_,r1_msgs_P1_1_, r1_msgs_P2_1_, r1_msgs_P3_1_, r1_msgs_P4_1_, r1_msgs_P1_2_, r1_msgs_P2_2_, r1_msgs_P3_2_, r1_msgs_P4_2_, r1_msgs_P1_3_, r1_msgs_P2_3_, r1_msgs_P3_3_, r1_msgs_P4_3_, r1_msgs_P1_4_, r1_msgs_P2_4_, r1_msgs_P3_4_, r1_msgs_P4_4_, r1_msgs_P1_5_, r1_msgs_P2_5_, r1_msgs_P3_5_, r1_msgs_P4_5_, r1_msgs_P1_6_, r1_msgs_P2_6_, r1_msgs_P3_6_, r1_msgs_P4_6_, r1_msgs_P1_7_, r1_msgs_P2_7_, r1_msgs_P3_7_, r1_msgs_P4_7_, r1_msgs_P1_8_, r1_msgs_P2_8_, r1_msgs_P3_8_, r1_msgs_P4_8_, r1_msgs_P1_9_, r1_msgs_P2_9_, r1_msgs_P3_9_, r1_msgs_P4_9_) = LOWMC_ROUND_ONLINE(hsk_1_, hsk_2_, hsk_3_, hsk_4_, hsk_5_, hsk_6_, hsk_7_, hsk_8_, hsk_9_, r1_stin_1_, r1_stin_2_, r1_stin_3_, r1_stin_4_, r1_stin_5_, r1_stin_6_, r1_stin_7_, r1_stin_8_, r1_stin_9_, r1_tape_P1_1_, r1_tape_P2_1_, r1_tape_P3_1_, r1_tape_P4_1_, r1_tape_P1_2_, r1_tape_P2_2_, r1_tape_P3_2_, r1_tape_P4_2_, r1_tape_P1_3_, r1_tape_P2_3_, r1_tape_P3_3_, r1_tape_P4_3_, r1_tape_P1_4_, r1_tape_P2_4_, r1_tape_P3_4_, r1_tape_P4_4_, r1_tape_P1_5_, r1_tape_P2_5_, r1_tape_P3_5_, r1_tape_P4_5_, r1_tape_P1_6_, r1_tape_P2_6_, r1_tape_P3_6_, r1_tape_P4_6_, r1_tape_P1_7_, r1_tape_P2_7_, r1_tape_P3_7_, r1_tape_P4_7_, r1_tape_P1_8_, r1_tape_P2_8_, r1_tape_P3_8_, r1_tape_P4_8_, r1_tape_P1_9_, r1_tape_P2_9_, r1_tape_P3_9_, r1_tape_P4_9_, r1_helper_P1_1_, r1_helper_P2_1_, r1_helper_P3_1_, r1_helper_P4_1_, r1_helper_P1_2_, r1_helper_P2_2_, r1_helper_P3_2_, r1_helper_P4_2_, r1_helper_P1_3_, r1_helper_P2_3_, r1_helper_P3_3_, r1_helper_P4_3_, r1_helper_P1_4_, r1_helper_P2_4_, r1_helper_P3_4_, r1_helper_P4_4_, r1_helper_P1_5_, r1_helper_P2_5_, r1_helper_P3_5_, r1_helper_P4_5_, r1_helper_P1_6_, r1_helper_P2_6_, r1_helper_P3_6_, r1_helper_P4_6_, r1_helper_P1_7_, r1_helper_P2_7_, r1_helper_P3_7_, r1_helper_P4_7_, r1_helper_P1_8_, r1_helper_P2_8_, r1_helper_P3_8_, r1_helper_P4_8_, r1_helper_P1_9_, r1_helper_P2_9_, r1_helper_P3_9_, r1_helper_P4_9_);
+
+(* round 2 *)
+(r3_stin_1_,r3_stin_2_,r3_stin_3_,r3_stin_4_,r3_stin_5_,r3_stin_6_,r3_stin_7_,r3_stin_8_,r3_stin_9_,r2_msgs_P1_1_, r2_msgs_P2_1_, r2_msgs_P3_1_, r2_msgs_P4_1_, r2_msgs_P1_2_, r2_msgs_P2_2_, r2_msgs_P3_2_, r2_msgs_P4_2_, r2_msgs_P1_3_, r2_msgs_P2_3_, r2_msgs_P3_3_, r2_msgs_P4_3_, r2_msgs_P1_4_, r2_msgs_P2_4_, r2_msgs_P3_4_, r2_msgs_P4_4_, r2_msgs_P1_5_, r2_msgs_P2_5_, r2_msgs_P3_5_, r2_msgs_P4_5_, r2_msgs_P1_6_, r2_msgs_P2_6_, r2_msgs_P3_6_, r2_msgs_P4_6_, r2_msgs_P1_7_, r2_msgs_P2_7_, r2_msgs_P3_7_, r2_msgs_P4_7_, r2_msgs_P1_8_, r2_msgs_P2_8_, r2_msgs_P3_8_, r2_msgs_P4_8_, r2_msgs_P1_9_, r2_msgs_P2_9_, r2_msgs_P3_9_, r2_msgs_P4_9_) = LOWMC_ROUND_ONLINE(hsk_1_, hsk_2_, hsk_3_, hsk_4_, hsk_5_, hsk_6_, hsk_7_, hsk_8_, hsk_9_, r2_stin_1_, r2_stin_2_, r2_stin_3_, r2_stin_4_, r2_stin_5_, r2_stin_6_, r2_stin_7_, r2_stin_8_, r2_stin_9_, r2_tape_P1_1_, r2_tape_P2_1_, r2_tape_P3_1_, r2_tape_P4_1_, r2_tape_P1_2_, r2_tape_P2_2_, r2_tape_P3_2_, r2_tape_P4_2_, r2_tape_P1_3_, r2_tape_P2_3_, r2_tape_P3_3_, r2_tape_P4_3_, r2_tape_P1_4_, r2_tape_P2_4_, r2_tape_P3_4_, r2_tape_P4_4_, r2_tape_P1_5_, r2_tape_P2_5_, r2_tape_P3_5_, r2_tape_P4_5_, r2_tape_P1_6_, r2_tape_P2_6_, r2_tape_P3_6_, r2_tape_P4_6_, r2_tape_P1_7_, r2_tape_P2_7_, r2_tape_P3_7_, r2_tape_P4_7_, r2_tape_P1_8_, r2_tape_P2_8_, r2_tape_P3_8_, r2_tape_P4_8_, r2_tape_P1_9_, r2_tape_P2_9_, r2_tape_P3_9_, r2_tape_P4_9_, r2_helper_P1_1_, r2_helper_P2_1_, r2_helper_P3_1_, r2_helper_P4_1_, r2_helper_P1_2_, r2_helper_P2_2_, r2_helper_P3_2_, r2_helper_P4_2_, r2_helper_P1_3_, r2_helper_P2_3_, r2_helper_P3_3_, r2_helper_P4_3_, r2_helper_P1_4_, r2_helper_P2_4_, r2_helper_P3_4_, r2_helper_P4_4_, r2_helper_P1_5_, r2_helper_P2_5_, r2_helper_P3_5_, r2_helper_P4_5_, r2_helper_P1_6_, r2_helper_P2_6_, r2_helper_P3_6_, r2_helper_P4_6_, r2_helper_P1_7_, r2_helper_P2_7_, r2_helper_P3_7_, r2_helper_P4_7_, r2_helper_P1_8_, r2_helper_P2_8_, r2_helper_P3_8_, r2_helper_P4_8_, r2_helper_P1_9_, r2_helper_P2_9_, r2_helper_P3_9_, r2_helper_P4_9_);
+
+(* round 3 *)
+(r4_stin_1_,r4_stin_2_,r4_stin_3_,r4_stin_4_,r4_stin_5_,r4_stin_6_,r4_stin_7_,r4_stin_8_,r4_stin_9_,r3_msgs_P1_1_, r3_msgs_P2_1_, r3_msgs_P3_1_, r3_msgs_P4_1_, r3_msgs_P1_2_, r3_msgs_P2_2_, r3_msgs_P3_2_, r3_msgs_P4_2_, r3_msgs_P1_3_, r3_msgs_P2_3_, r3_msgs_P3_3_, r3_msgs_P4_3_, r3_msgs_P1_4_, r3_msgs_P2_4_, r3_msgs_P3_4_, r3_msgs_P4_4_, r3_msgs_P1_5_, r3_msgs_P2_5_, r3_msgs_P3_5_, r3_msgs_P4_5_, r3_msgs_P1_6_, r3_msgs_P2_6_, r3_msgs_P3_6_, r3_msgs_P4_6_, r3_msgs_P1_7_, r3_msgs_P2_7_, r3_msgs_P3_7_, r3_msgs_P4_7_, r3_msgs_P1_8_, r3_msgs_P2_8_, r3_msgs_P3_8_, r3_msgs_P4_8_, r3_msgs_P1_9_, r3_msgs_P2_9_, r3_msgs_P3_9_, r3_msgs_P4_9_) = LOWMC_ROUND_ONLINE(hsk_1_, hsk_2_, hsk_3_, hsk_4_, hsk_5_, hsk_6_, hsk_7_, hsk_8_, hsk_9_, r3_stin_1_, r3_stin_2_, r3_stin_3_, r3_stin_4_, r3_stin_5_, r3_stin_6_, r3_stin_7_, r3_stin_8_, r3_stin_9_, r3_tape_P1_1_, r3_tape_P2_1_, r3_tape_P3_1_, r3_tape_P4_1_, r3_tape_P1_2_, r3_tape_P2_2_, r3_tape_P3_2_, r3_tape_P4_2_, r3_tape_P1_3_, r3_tape_P2_3_, r3_tape_P3_3_, r3_tape_P4_3_, r3_tape_P1_4_, r3_tape_P2_4_, r3_tape_P3_4_, r3_tape_P4_4_, r3_tape_P1_5_, r3_tape_P2_5_, r3_tape_P3_5_, r3_tape_P4_5_, r3_tape_P1_6_, r3_tape_P2_6_, r3_tape_P3_6_, r3_tape_P4_6_, r3_tape_P1_7_, r3_tape_P2_7_, r3_tape_P3_7_, r3_tape_P4_7_, r3_tape_P1_8_, r3_tape_P2_8_, r3_tape_P3_8_, r3_tape_P4_8_, r3_tape_P1_9_, r3_tape_P2_9_, r3_tape_P3_9_, r3_tape_P4_9_, r3_helper_P1_1_, r3_helper_P2_1_, r3_helper_P3_1_, r3_helper_P4_1_, r3_helper_P1_2_, r3_helper_P2_2_, r3_helper_P3_2_, r3_helper_P4_2_, r3_helper_P1_3_, r3_helper_P2_3_, r3_helper_P3_3_, r3_helper_P4_3_, r3_helper_P1_4_, r3_helper_P2_4_, r3_helper_P3_4_, r3_helper_P4_4_, r3_helper_P1_5_, r3_helper_P2_5_, r3_helper_P3_5_, r3_helper_P4_5_, r3_helper_P1_6_, r3_helper_P2_6_, r3_helper_P3_6_, r3_helper_P4_6_, r3_helper_P1_7_, r3_helper_P2_7_, r3_helper_P3_7_, r3_helper_P4_7_, r3_helper_P1_8_, r3_helper_P2_8_, r3_helper_P3_8_, r3_helper_P4_8_, r3_helper_P1_9_, r3_helper_P2_9_, r3_helper_P3_9_, r3_helper_P4_9_);
+
+
+end
+
+proc PICNIC_MPC:
+  inputs: sk_1_[0:1], sk_2_[0:1], sk_3_[0:1], sk_4_[0:1], sk_5_[0:1], sk_6_[0:1], sk_7_[0:1], sk_8_[0:1], sk_9_[0:1], 
+r1_tape_P1_1_[0:1], r1_tape_P2_1_[0:1], r1_tape_P3_1_[0:1], r1_tape_P4_1_[0:1], r1_tape_P1_2_[0:1], r1_tape_P2_2_[0:1], r1_tape_P3_2_[0:1], r1_tape_P4_2_[0:1], r1_tape_P1_3_[0:1], r1_tape_P2_3_[0:1], r1_tape_P3_3_[0:1], r1_tape_P4_3_[0:1], r1_tape_P1_4_[0:1], r1_tape_P2_4_[0:1], r1_tape_P3_4_[0:1], r1_tape_P4_4_[0:1], r1_tape_P1_5_[0:1], r1_tape_P2_5_[0:1], r1_tape_P3_5_[0:1], r1_tape_P4_5_[0:1], r1_tape_P1_6_[0:1], r1_tape_P2_6_[0:1], r1_tape_P3_6_[0:1], r1_tape_P4_6_[0:1], r1_tape_P1_7_[0:1], r1_tape_P2_7_[0:1], r1_tape_P3_7_[0:1], r1_tape_P4_7_[0:1], r1_tape_P1_8_[0:1], r1_tape_P2_8_[0:1], r1_tape_P3_8_[0:1], r1_tape_P4_8_[0:1], r1_tape_P1_9_[0:1], r1_tape_P2_9_[0:1], r1_tape_P3_9_[0:1], r1_tape_P4_9_[0:1], r2_tape_P1_1_[0:1], r2_tape_P2_1_[0:1], r2_tape_P3_1_[0:1], r2_tape_P4_1_[0:1], r2_tape_P1_2_[0:1], r2_tape_P2_2_[0:1], r2_tape_P3_2_[0:1], r2_tape_P4_2_[0:1], r2_tape_P1_3_[0:1], r2_tape_P2_3_[0:1], r2_tape_P3_3_[0:1], r2_tape_P4_3_[0:1], r2_tape_P1_4_[0:1], r2_tape_P2_4_[0:1], r2_tape_P3_4_[0:1], r2_tape_P4_4_[0:1], r2_tape_P1_5_[0:1], r2_tape_P2_5_[0:1], r2_tape_P3_5_[0:1], r2_tape_P4_5_[0:1], r2_tape_P1_6_[0:1], r2_tape_P2_6_[0:1], r2_tape_P3_6_[0:1], r2_tape_P4_6_[0:1], r2_tape_P1_7_[0:1], r2_tape_P2_7_[0:1], r2_tape_P3_7_[0:1], r2_tape_P4_7_[0:1], r2_tape_P1_8_[0:1], r2_tape_P2_8_[0:1], r2_tape_P3_8_[0:1], r2_tape_P4_8_[0:1], r2_tape_P1_9_[0:1], r2_tape_P2_9_[0:1], r2_tape_P3_9_[0:1], r2_tape_P4_9_[0:1], r3_tape_P1_1_[0:1], r3_tape_P2_1_[0:1], r3_tape_P3_1_[0:1], r3_tape_P4_1_[0:1], r3_tape_P1_2_[0:1], r3_tape_P2_2_[0:1], r3_tape_P3_2_[0:1], r3_tape_P4_2_[0:1], r3_tape_P1_3_[0:1], r3_tape_P2_3_[0:1], r3_tape_P3_3_[0:1], r3_tape_P4_3_[0:1], r3_tape_P1_4_[0:1], r3_tape_P2_4_[0:1], r3_tape_P3_4_[0:1], r3_tape_P4_4_[0:1], r3_tape_P1_5_[0:1], r3_tape_P2_5_[0:1], r3_tape_P3_5_[0:1], r3_tape_P4_5_[0:1], r3_tape_P1_6_[0:1], r3_tape_P2_6_[0:1], r3_tape_P3_6_[0:1], r3_tape_P4_6_[0:1], r3_tape_P1_7_[0:1], r3_tape_P2_7_[0:1], r3_tape_P3_7_[0:1], r3_tape_P4_7_[0:1], r3_tape_P1_8_[0:1], r3_tape_P2_8_[0:1], r3_tape_P3_8_[0:1], r3_tape_P4_8_[0:1], r3_tape_P1_9_[0:1], r3_tape_P2_9_[0:1], r3_tape_P3_9_[0:1], r3_tape_P4_9_[0:1], 
+r1_helper_P1_1_[0:1], r1_helper_P2_1_[0:1], r1_helper_P3_1_[0:1], r1_helper_P1_2_[0:1], r1_helper_P2_2_[0:1], r1_helper_P3_2_[0:1], r1_helper_P1_3_[0:1], r1_helper_P2_3_[0:1], r1_helper_P3_3_[0:1], r1_helper_P1_4_[0:1], r1_helper_P2_4_[0:1], r1_helper_P3_4_[0:1], r1_helper_P1_5_[0:1], r1_helper_P2_5_[0:1], r1_helper_P3_5_[0:1], r1_helper_P1_6_[0:1], r1_helper_P2_6_[0:1], r1_helper_P3_6_[0:1], r1_helper_P1_7_[0:1], r1_helper_P2_7_[0:1], r1_helper_P3_7_[0:1], r1_helper_P1_8_[0:1], r1_helper_P2_8_[0:1], r1_helper_P3_8_[0:1], r1_helper_P1_9_[0:1], r1_helper_P2_9_[0:1], r1_helper_P3_9_[0:1], r2_helper_P1_1_[0:1], r2_helper_P2_1_[0:1], r2_helper_P3_1_[0:1], r2_helper_P1_2_[0:1], r2_helper_P2_2_[0:1], r2_helper_P3_2_[0:1], r2_helper_P1_3_[0:1], r2_helper_P2_3_[0:1], r2_helper_P3_3_[0:1], r2_helper_P1_4_[0:1], r2_helper_P2_4_[0:1], r2_helper_P3_4_[0:1], r2_helper_P1_5_[0:1], r2_helper_P2_5_[0:1], r2_helper_P3_5_[0:1], r2_helper_P1_6_[0:1], r2_helper_P2_6_[0:1], r2_helper_P3_6_[0:1], r2_helper_P1_7_[0:1], r2_helper_P2_7_[0:1], r2_helper_P3_7_[0:1], r2_helper_P1_8_[0:1], r2_helper_P2_8_[0:1], r2_helper_P3_8_[0:1], r2_helper_P1_9_[0:1], r2_helper_P2_9_[0:1], r2_helper_P3_9_[0:1], r3_helper_P1_1_[0:1], r3_helper_P2_1_[0:1], r3_helper_P3_1_[0:1], r3_helper_P1_2_[0:1], r3_helper_P2_2_[0:1], r3_helper_P3_2_[0:1], r3_helper_P1_3_[0:1], r3_helper_P2_3_[0:1], r3_helper_P3_3_[0:1], r3_helper_P1_4_[0:1], r3_helper_P2_4_[0:1], r3_helper_P3_4_[0:1], r3_helper_P1_5_[0:1], r3_helper_P2_5_[0:1], r3_helper_P3_5_[0:1], r3_helper_P1_6_[0:1], r3_helper_P2_6_[0:1], r3_helper_P3_6_[0:1], r3_helper_P1_7_[0:1], r3_helper_P2_7_[0:1], r3_helper_P3_7_[0:1], r3_helper_P1_8_[0:1], r3_helper_P2_8_[0:1], r3_helper_P3_8_[0:1], r3_helper_P1_9_[0:1], r3_helper_P2_9_[0:1], r3_helper_P3_9_[0:1], 
+(* shares of zero vectors *)
+zero_1_[0:1], zero_2_[0:1], zero_3_[0:1], zero_4_[0:1], zero_5_[0:1], zero_6_[0:1], zero_7_[0:1], zero_8_[0:1], zero_9_[0:1]
+
+  outputs: (* offline results to be committed *)
+r1_helper_P4_1_[0:1], r1_helper_P4_2_[0:1], r1_helper_P4_3_[0:1], r1_helper_P4_4_[0:1], r1_helper_P4_5_[0:1], r1_helper_P4_6_[0:1], r1_helper_P4_7_[0:1], r1_helper_P4_8_[0:1], r1_helper_P4_9_[0:1], 
+r2_helper_P4_1_[0:1], r2_helper_P4_2_[0:1], r2_helper_P4_3_[0:1], r2_helper_P4_4_[0:1], r2_helper_P4_5_[0:1], r2_helper_P4_6_[0:1], r2_helper_P4_7_[0:1], r2_helper_P4_8_[0:1], r2_helper_P4_9_[0:1], 
+r3_helper_P4_1_[0:1], r3_helper_P4_2_[0:1], r3_helper_P4_3_[0:1], r3_helper_P4_4_[0:1], r3_helper_P4_5_[0:1], r3_helper_P4_6_[0:1], r3_helper_P4_7_[0:1], r3_helper_P4_8_[0:1], r3_helper_P4_9_[0:1], 
+
+(* online results to be committed *)
+hsk_1_[0:1], hsk_2_[0:1], hsk_3_[0:1], hsk_4_[0:1], hsk_5_[0:1], hsk_6_[0:1], hsk_7_[0:1], hsk_8_[0:1], hsk_9_[0:1], 
+r1_msgs_P1_1_[0:1], r1_msgs_P2_1_[0:1], r1_msgs_P3_1_[0:1], r1_msgs_P4_1_[0:1], r1_msgs_P1_2_[0:1], r1_msgs_P2_2_[0:1], r1_msgs_P3_2_[0:1], r1_msgs_P4_2_[0:1], r1_msgs_P1_3_[0:1], r1_msgs_P2_3_[0:1], r1_msgs_P3_3_[0:1], r1_msgs_P4_3_[0:1], r1_msgs_P1_4_[0:1], r1_msgs_P2_4_[0:1], r1_msgs_P3_4_[0:1], r1_msgs_P4_4_[0:1], r1_msgs_P1_5_[0:1], r1_msgs_P2_5_[0:1], r1_msgs_P3_5_[0:1], r1_msgs_P4_5_[0:1], r1_msgs_P1_6_[0:1], r1_msgs_P2_6_[0:1], r1_msgs_P3_6_[0:1], r1_msgs_P4_6_[0:1], r1_msgs_P1_7_[0:1], r1_msgs_P2_7_[0:1], r1_msgs_P3_7_[0:1], r1_msgs_P4_7_[0:1], r1_msgs_P1_8_[0:1], r1_msgs_P2_8_[0:1], r1_msgs_P3_8_[0:1], r1_msgs_P4_8_[0:1], r1_msgs_P1_9_[0:1], r1_msgs_P2_9_[0:1], r1_msgs_P3_9_[0:1], r1_msgs_P4_9_[0:1], r2_msgs_P1_1_[0:1], r2_msgs_P2_1_[0:1], r2_msgs_P3_1_[0:1], r2_msgs_P4_1_[0:1], r2_msgs_P1_2_[0:1], r2_msgs_P2_2_[0:1], r2_msgs_P3_2_[0:1], r2_msgs_P4_2_[0:1], r2_msgs_P1_3_[0:1], r2_msgs_P2_3_[0:1], r2_msgs_P3_3_[0:1], r2_msgs_P4_3_[0:1], r2_msgs_P1_4_[0:1], r2_msgs_P2_4_[0:1], r2_msgs_P3_4_[0:1], r2_msgs_P4_4_[0:1], r2_msgs_P1_5_[0:1], r2_msgs_P2_5_[0:1], r2_msgs_P3_5_[0:1], r2_msgs_P4_5_[0:1], r2_msgs_P1_6_[0:1], r2_msgs_P2_6_[0:1], r2_msgs_P3_6_[0:1], r2_msgs_P4_6_[0:1], r2_msgs_P1_7_[0:1], r2_msgs_P2_7_[0:1], r2_msgs_P3_7_[0:1], r2_msgs_P4_7_[0:1], r2_msgs_P1_8_[0:1], r2_msgs_P2_8_[0:1], r2_msgs_P3_8_[0:1], r2_msgs_P4_8_[0:1], r2_msgs_P1_9_[0:1], r2_msgs_P2_9_[0:1], r2_msgs_P3_9_[0:1], r2_msgs_P4_9_[0:1], r3_msgs_P1_1_[0:1], r3_msgs_P2_1_[0:1], r3_msgs_P3_1_[0:1], r3_msgs_P4_1_[0:1], r3_msgs_P1_2_[0:1], r3_msgs_P2_2_[0:1], r3_msgs_P3_2_[0:1], r3_msgs_P4_2_[0:1], r3_msgs_P1_3_[0:1], r3_msgs_P2_3_[0:1], r3_msgs_P3_3_[0:1], r3_msgs_P4_3_[0:1], r3_msgs_P1_4_[0:1], r3_msgs_P2_4_[0:1], r3_msgs_P3_4_[0:1], r3_msgs_P4_4_[0:1], r3_msgs_P1_5_[0:1], r3_msgs_P2_5_[0:1], r3_msgs_P3_5_[0:1], r3_msgs_P4_5_[0:1], r3_msgs_P1_6_[0:1], r3_msgs_P2_6_[0:1], r3_msgs_P3_6_[0:1], r3_msgs_P4_6_[0:1], r3_msgs_P1_7_[0:1], r3_msgs_P2_7_[0:1], r3_msgs_P3_7_[0:1], r3_msgs_P4_7_[0:1], r3_msgs_P1_8_[0:1], r3_msgs_P2_8_[0:1], r3_msgs_P3_8_[0:1], r3_msgs_P4_8_[0:1], r3_msgs_P1_9_[0:1], r3_msgs_P2_9_[0:1], r3_msgs_P3_9_[0:1], r3_msgs_P4_9_[0:1], 
+r4_stin_1_[0:1], r4_stin_2_[0:1], r4_stin_3_[0:1], r4_stin_4_[0:1], r4_stin_5_[0:1], r4_stin_6_[0:1], r4_stin_7_[0:1], r4_stin_8_[0:1], r4_stin_9_[0:1] 
+
+  shares: rsk_1_[0:1], rsk_2_[0:1], rsk_3_[0:1], rsk_4_[0:1], rsk_5_[0:1], rsk_6_[0:1], rsk_7_[0:1], rsk_8_[0:1], rsk_9_[0:1], 
+lsk_1_[0:1], lsk_2_[0:1], lsk_3_[0:1], lsk_4_[0:1], lsk_5_[0:1], lsk_6_[0:1], lsk_7_[0:1], lsk_8_[0:1], lsk_9_[0:1];
+
+(* offline phase *)
+(r1_helper_P4_1_, r1_helper_P4_2_, r1_helper_P4_3_, r1_helper_P4_4_, r1_helper_P4_5_, r1_helper_P4_6_, r1_helper_P4_7_, r1_helper_P4_8_, r1_helper_P4_9_, r2_helper_P4_1_, r2_helper_P4_2_, r2_helper_P4_3_, r2_helper_P4_4_, r2_helper_P4_5_, r2_helper_P4_6_, r2_helper_P4_7_, r2_helper_P4_8_, r2_helper_P4_9_, r3_helper_P4_1_, r3_helper_P4_2_, r3_helper_P4_3_, r3_helper_P4_4_, r3_helper_P4_5_, r3_helper_P4_6_, r3_helper_P4_7_, r3_helper_P4_8_, r3_helper_P4_9_, lsk_1_, lsk_2_, lsk_3_, lsk_4_, lsk_5_, lsk_6_, lsk_7_, lsk_8_, lsk_9_) = PICNIC_OFFLINE(
+r1_tape_P1_1_, r1_tape_P2_1_, r1_tape_P3_1_, r1_tape_P4_1_, r1_tape_P1_2_, r1_tape_P2_2_, r1_tape_P3_2_, r1_tape_P4_2_, r1_tape_P1_3_, r1_tape_P2_3_, r1_tape_P3_3_, r1_tape_P4_3_, r1_tape_P1_4_, r1_tape_P2_4_, r1_tape_P3_4_, r1_tape_P4_4_, r1_tape_P1_5_, r1_tape_P2_5_, r1_tape_P3_5_, r1_tape_P4_5_, r1_tape_P1_6_, r1_tape_P2_6_, r1_tape_P3_6_, r1_tape_P4_6_, r1_tape_P1_7_, r1_tape_P2_7_, r1_tape_P3_7_, r1_tape_P4_7_, r1_tape_P1_8_, r1_tape_P2_8_, r1_tape_P3_8_, r1_tape_P4_8_, r1_tape_P1_9_, r1_tape_P2_9_, r1_tape_P3_9_, r1_tape_P4_9_, r2_tape_P1_1_, r2_tape_P2_1_, r2_tape_P3_1_, r2_tape_P4_1_, r2_tape_P1_2_, r2_tape_P2_2_, r2_tape_P3_2_, r2_tape_P4_2_, r2_tape_P1_3_, r2_tape_P2_3_, r2_tape_P3_3_, r2_tape_P4_3_, r2_tape_P1_4_, r2_tape_P2_4_, r2_tape_P3_4_, r2_tape_P4_4_, r2_tape_P1_5_, r2_tape_P2_5_, r2_tape_P3_5_, r2_tape_P4_5_, r2_tape_P1_6_, r2_tape_P2_6_, r2_tape_P3_6_, r2_tape_P4_6_, r2_tape_P1_7_, r2_tape_P2_7_, r2_tape_P3_7_, r2_tape_P4_7_, r2_tape_P1_8_, r2_tape_P2_8_, r2_tape_P3_8_, r2_tape_P4_8_, r2_tape_P1_9_, r2_tape_P2_9_, r2_tape_P3_9_, r2_tape_P4_9_, r3_tape_P1_1_, r3_tape_P2_1_, r3_tape_P3_1_, r3_tape_P4_1_, r3_tape_P1_2_, r3_tape_P2_2_, r3_tape_P3_2_, r3_tape_P4_2_, r3_tape_P1_3_, r3_tape_P2_3_, r3_tape_P3_3_, r3_tape_P4_3_, r3_tape_P1_4_, r3_tape_P2_4_, r3_tape_P3_4_, r3_tape_P4_4_, r3_tape_P1_5_, r3_tape_P2_5_, r3_tape_P3_5_, r3_tape_P4_5_, r3_tape_P1_6_, r3_tape_P2_6_, r3_tape_P3_6_, r3_tape_P4_6_, r3_tape_P1_7_, r3_tape_P2_7_, r3_tape_P3_7_, r3_tape_P4_7_, r3_tape_P1_8_, r3_tape_P2_8_, r3_tape_P3_8_, r3_tape_P4_8_, r3_tape_P1_9_, r3_tape_P2_9_, r3_tape_P3_9_, r3_tape_P4_9_, r1_helper_P1_1_, r1_helper_P2_1_, r1_helper_P3_1_, r1_helper_P1_2_, r1_helper_P2_2_, r1_helper_P3_2_, r1_helper_P1_3_, r1_helper_P2_3_, r1_helper_P3_3_, r1_helper_P1_4_, r1_helper_P2_4_, r1_helper_P3_4_, r1_helper_P1_5_, r1_helper_P2_5_, r1_helper_P3_5_, r1_helper_P1_6_, r1_helper_P2_6_, r1_helper_P3_6_, r1_helper_P1_7_, r1_helper_P2_7_, r1_helper_P3_7_, r1_helper_P1_8_, r1_helper_P2_8_, r1_helper_P3_8_, r1_helper_P1_9_, r1_helper_P2_9_, r1_helper_P3_9_, r2_helper_P1_1_, r2_helper_P2_1_, r2_helper_P3_1_, r2_helper_P1_2_, r2_helper_P2_2_, r2_helper_P3_2_, r2_helper_P1_3_, r2_helper_P2_3_, r2_helper_P3_3_, r2_helper_P1_4_, r2_helper_P2_4_, r2_helper_P3_4_, r2_helper_P1_5_, r2_helper_P2_5_, r2_helper_P3_5_, r2_helper_P1_6_, r2_helper_P2_6_, r2_helper_P3_6_, r2_helper_P1_7_, r2_helper_P2_7_, r2_helper_P3_7_, r2_helper_P1_8_, r2_helper_P2_8_, r2_helper_P3_8_, r2_helper_P1_9_, r2_helper_P2_9_, r2_helper_P3_9_, r3_helper_P1_1_, r3_helper_P2_1_, r3_helper_P3_1_, r3_helper_P1_2_, r3_helper_P2_2_, r3_helper_P3_2_, r3_helper_P1_3_, r3_helper_P2_3_, r3_helper_P3_3_, r3_helper_P1_4_, r3_helper_P2_4_, r3_helper_P3_4_, r3_helper_P1_5_, r3_helper_P2_5_, r3_helper_P3_5_, r3_helper_P1_6_, r3_helper_P2_6_, r3_helper_P3_6_, r3_helper_P1_7_, r3_helper_P2_7_, r3_helper_P3_7_, r3_helper_P1_8_, r3_helper_P2_8_, r3_helper_P3_8_, r3_helper_P1_9_, r3_helper_P2_9_, r3_helper_P3_9_, zero_1_, zero_2_, zero_3_, zero_4_, zero_5_, zero_6_, zero_7_, zero_8_, zero_9_);
+
+(* refresh & mask secret key *)
+rsk_1_ = REFM(sk_1_);
+rsk_2_ = REFM(sk_2_);
+rsk_3_ = REFM(sk_3_);
+rsk_4_ = REFM(sk_4_);
+rsk_5_ = REFM(sk_5_);
+rsk_6_ = REFM(sk_6_);
+rsk_7_ = REFM(sk_7_);
+rsk_8_ = REFM(sk_8_);
+rsk_9_ = REFM(sk_9_);
+hsk_1_ := rsk_1_ + lsk_1_;
+hsk_2_ := rsk_2_ + lsk_2_;
+hsk_3_ := rsk_3_ + lsk_3_;
+hsk_4_ := rsk_4_ + lsk_4_;
+hsk_5_ := rsk_5_ + lsk_5_;
+hsk_6_ := rsk_6_ + lsk_6_;
+hsk_7_ := rsk_7_ + lsk_7_;
+hsk_8_ := rsk_8_ + lsk_8_;
+hsk_9_ := rsk_9_ + lsk_9_;
+
+(* online phase *)
+(r1_msgs_P1_1_, r1_msgs_P2_1_, r1_msgs_P3_1_, r1_msgs_P4_1_, r1_msgs_P1_2_, r1_msgs_P2_2_, r1_msgs_P3_2_, r1_msgs_P4_2_, r1_msgs_P1_3_, r1_msgs_P2_3_, r1_msgs_P3_3_, r1_msgs_P4_3_, r1_msgs_P1_4_, r1_msgs_P2_4_, r1_msgs_P3_4_, r1_msgs_P4_4_, r1_msgs_P1_5_, r1_msgs_P2_5_, r1_msgs_P3_5_, r1_msgs_P4_5_, r1_msgs_P1_6_, r1_msgs_P2_6_, r1_msgs_P3_6_, r1_msgs_P4_6_, r1_msgs_P1_7_, r1_msgs_P2_7_, r1_msgs_P3_7_, r1_msgs_P4_7_, r1_msgs_P1_8_, r1_msgs_P2_8_, r1_msgs_P3_8_, r1_msgs_P4_8_, r1_msgs_P1_9_, r1_msgs_P2_9_, r1_msgs_P3_9_, r1_msgs_P4_9_, r2_msgs_P1_1_, r2_msgs_P2_1_, r2_msgs_P3_1_, r2_msgs_P4_1_, r2_msgs_P1_2_, r2_msgs_P2_2_, r2_msgs_P3_2_, r2_msgs_P4_2_, r2_msgs_P1_3_, r2_msgs_P2_3_, r2_msgs_P3_3_, r2_msgs_P4_3_, r2_msgs_P1_4_, r2_msgs_P2_4_, r2_msgs_P3_4_, r2_msgs_P4_4_, r2_msgs_P1_5_, r2_msgs_P2_5_, r2_msgs_P3_5_, r2_msgs_P4_5_, r2_msgs_P1_6_, r2_msgs_P2_6_, r2_msgs_P3_6_, r2_msgs_P4_6_, r2_msgs_P1_7_, r2_msgs_P2_7_, r2_msgs_P3_7_, r2_msgs_P4_7_, r2_msgs_P1_8_, r2_msgs_P2_8_, r2_msgs_P3_8_, r2_msgs_P4_8_, r2_msgs_P1_9_, r2_msgs_P2_9_, r2_msgs_P3_9_, r2_msgs_P4_9_, r3_msgs_P1_1_, r3_msgs_P2_1_, r3_msgs_P3_1_, r3_msgs_P4_1_, r3_msgs_P1_2_, r3_msgs_P2_2_, r3_msgs_P3_2_, r3_msgs_P4_2_, r3_msgs_P1_3_, r3_msgs_P2_3_, r3_msgs_P3_3_, r3_msgs_P4_3_, r3_msgs_P1_4_, r3_msgs_P2_4_, r3_msgs_P3_4_, r3_msgs_P4_4_, r3_msgs_P1_5_, r3_msgs_P2_5_, r3_msgs_P3_5_, r3_msgs_P4_5_, r3_msgs_P1_6_, r3_msgs_P2_6_, r3_msgs_P3_6_, r3_msgs_P4_6_, r3_msgs_P1_7_, r3_msgs_P2_7_, r3_msgs_P3_7_, r3_msgs_P4_7_, r3_msgs_P1_8_, r3_msgs_P2_8_, r3_msgs_P3_8_, r3_msgs_P4_8_, r3_msgs_P1_9_, r3_msgs_P2_9_, r3_msgs_P3_9_, r3_msgs_P4_9_, r4_stin_1_, r4_stin_2_, r4_stin_3_, r4_stin_4_, r4_stin_5_, r4_stin_6_, r4_stin_7_, r4_stin_8_, r4_stin_9_) = PICNIC_ONLINE(
+hsk_1_, hsk_2_, hsk_3_, hsk_4_, hsk_5_, hsk_6_, hsk_7_, hsk_8_, hsk_9_, r1_tape_P1_1_, r1_tape_P2_1_, r1_tape_P3_1_, r1_tape_P4_1_, r1_tape_P1_2_, r1_tape_P2_2_, r1_tape_P3_2_, r1_tape_P4_2_, r1_tape_P1_3_, r1_tape_P2_3_, r1_tape_P3_3_, r1_tape_P4_3_, r1_tape_P1_4_, r1_tape_P2_4_, r1_tape_P3_4_, r1_tape_P4_4_, r1_tape_P1_5_, r1_tape_P2_5_, r1_tape_P3_5_, r1_tape_P4_5_, r1_tape_P1_6_, r1_tape_P2_6_, r1_tape_P3_6_, r1_tape_P4_6_, r1_tape_P1_7_, r1_tape_P2_7_, r1_tape_P3_7_, r1_tape_P4_7_, r1_tape_P1_8_, r1_tape_P2_8_, r1_tape_P3_8_, r1_tape_P4_8_, r1_tape_P1_9_, r1_tape_P2_9_, r1_tape_P3_9_, r1_tape_P4_9_, r2_tape_P1_1_, r2_tape_P2_1_, r2_tape_P3_1_, r2_tape_P4_1_, r2_tape_P1_2_, r2_tape_P2_2_, r2_tape_P3_2_, r2_tape_P4_2_, r2_tape_P1_3_, r2_tape_P2_3_, r2_tape_P3_3_, r2_tape_P4_3_, r2_tape_P1_4_, r2_tape_P2_4_, r2_tape_P3_4_, r2_tape_P4_4_, r2_tape_P1_5_, r2_tape_P2_5_, r2_tape_P3_5_, r2_tape_P4_5_, r2_tape_P1_6_, r2_tape_P2_6_, r2_tape_P3_6_, r2_tape_P4_6_, r2_tape_P1_7_, r2_tape_P2_7_, r2_tape_P3_7_, r2_tape_P4_7_, r2_tape_P1_8_, r2_tape_P2_8_, r2_tape_P3_8_, r2_tape_P4_8_, r2_tape_P1_9_, r2_tape_P2_9_, r2_tape_P3_9_, r2_tape_P4_9_, r3_tape_P1_1_, r3_tape_P2_1_, r3_tape_P3_1_, r3_tape_P4_1_, r3_tape_P1_2_, r3_tape_P2_2_, r3_tape_P3_2_, r3_tape_P4_2_, r3_tape_P1_3_, r3_tape_P2_3_, r3_tape_P3_3_, r3_tape_P4_3_, r3_tape_P1_4_, r3_tape_P2_4_, r3_tape_P3_4_, r3_tape_P4_4_, r3_tape_P1_5_, r3_tape_P2_5_, r3_tape_P3_5_, r3_tape_P4_5_, r3_tape_P1_6_, r3_tape_P2_6_, r3_tape_P3_6_, r3_tape_P4_6_, r3_tape_P1_7_, r3_tape_P2_7_, r3_tape_P3_7_, r3_tape_P4_7_, r3_tape_P1_8_, r3_tape_P2_8_, r3_tape_P3_8_, r3_tape_P4_8_, r3_tape_P1_9_, r3_tape_P2_9_, r3_tape_P3_9_, r3_tape_P4_9_, r1_helper_P1_1_, r1_helper_P2_1_, r1_helper_P3_1_, r1_helper_P4_1_, r1_helper_P1_2_, r1_helper_P2_2_, r1_helper_P3_2_, r1_helper_P4_2_, r1_helper_P1_3_, r1_helper_P2_3_, r1_helper_P3_3_, r1_helper_P4_3_, r1_helper_P1_4_, r1_helper_P2_4_, r1_helper_P3_4_, r1_helper_P4_4_, r1_helper_P1_5_, r1_helper_P2_5_, r1_helper_P3_5_, r1_helper_P4_5_, r1_helper_P1_6_, r1_helper_P2_6_, r1_helper_P3_6_, r1_helper_P4_6_, r1_helper_P1_7_, r1_helper_P2_7_, r1_helper_P3_7_, r1_helper_P4_7_, r1_helper_P1_8_, r1_helper_P2_8_, r1_helper_P3_8_, r1_helper_P4_8_, r1_helper_P1_9_, r1_helper_P2_9_, r1_helper_P3_9_, r1_helper_P4_9_, r2_helper_P1_1_, r2_helper_P2_1_, r2_helper_P3_1_, r2_helper_P4_1_, r2_helper_P1_2_, r2_helper_P2_2_, r2_helper_P3_2_, r2_helper_P4_2_, r2_helper_P1_3_, r2_helper_P2_3_, r2_helper_P3_3_, r2_helper_P4_3_, r2_helper_P1_4_, r2_helper_P2_4_, r2_helper_P3_4_, r2_helper_P4_4_, r2_helper_P1_5_, r2_helper_P2_5_, r2_helper_P3_5_, r2_helper_P4_5_, r2_helper_P1_6_, r2_helper_P2_6_, r2_helper_P3_6_, r2_helper_P4_6_, r2_helper_P1_7_, r2_helper_P2_7_, r2_helper_P3_7_, r2_helper_P4_7_, r2_helper_P1_8_, r2_helper_P2_8_, r2_helper_P3_8_, r2_helper_P4_8_, r2_helper_P1_9_, r2_helper_P2_9_, r2_helper_P3_9_, r2_helper_P4_9_, r3_helper_P1_1_, r3_helper_P2_1_, r3_helper_P3_1_, r3_helper_P4_1_, r3_helper_P1_2_, r3_helper_P2_2_, r3_helper_P3_2_, r3_helper_P4_2_, r3_helper_P1_3_, r3_helper_P2_3_, r3_helper_P3_3_, r3_helper_P4_3_, r3_helper_P1_4_, r3_helper_P2_4_, r3_helper_P3_4_, r3_helper_P4_4_, r3_helper_P1_5_, r3_helper_P2_5_, r3_helper_P3_5_, r3_helper_P4_5_, r3_helper_P1_6_, r3_helper_P2_6_, r3_helper_P3_6_, r3_helper_P4_6_, r3_helper_P1_7_, r3_helper_P2_7_, r3_helper_P3_7_, r3_helper_P4_7_, r3_helper_P1_8_, r3_helper_P2_8_, r3_helper_P3_8_, r3_helper_P4_8_, r3_helper_P1_9_, r3_helper_P2_9_, r3_helper_P3_9_, r3_helper_P4_9_);
+end
+
+para noglitch NI PICNIC_OFFLINE
+para noglitch NI PICNIC_ONLINE
+para noglitch NI PICNIC_MPC

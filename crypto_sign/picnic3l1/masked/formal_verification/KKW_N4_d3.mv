@@ -1,0 +1,139 @@
+(* Multiplication-based refresh *)
+proc REFM:
+ inputs: x[0:3]
+ outputs: y[0:3]
+ randoms: r01, r02, r03, r12, r13, r23;
+  y[0] := x[0];
+  y[1] := x[1];
+  y[2] := x[2];
+  y[3] := x[3];
+  y[0] := y[0] + r01;
+  y[1] := y[1] + r01;
+  y[0] := y[0] + r02;
+  y[2] := y[2] + r02;
+  y[0] := y[0] + r03;
+  y[3] := y[3] + r03;
+  y[1] := y[1] + r12;
+  y[2] := y[2] + r12;
+  y[1] := y[1] + r13;
+  y[3] := y[3] + r13;
+  y[2] := y[2] + r23;
+  y[3] := y[3] + r23;
+end
+
+(* SNI secure AND *)
+proc AND:
+ inputs: a[0:3], b[0:3]
+ outputs: c[0:3]
+ randoms: r01, r02, r03, r12, r13, r23;
+  c[0] := a[0] * b[0];
+  c[1] := a[1] * b[1];
+  c[2] := a[2] * b[2];
+  c[3] := a[3] * b[3];
+  c[0] := c[0] + r01;
+  a0_b1 := a[0] * b[1];
+  a1_b0 := a[1] * b[0];
+  r10 := a0_b1 + r01;
+  r10 := r10   + a1_b0;
+  c[1] := c[1] + r10;
+  c[0] := c[0] + r02;
+  a0_b2 := a[0] * b[2];
+  a2_b0 := a[2] * b[0];
+  r20 := a0_b2 + r02;
+  r20 := r20   + a2_b0;
+  c[2] := c[2] + r20;
+  c[0] := c[0] + r03;
+  a0_b3 := a[0] * b[3];
+  a3_b0 := a[3] * b[0];
+  r30 := a0_b3 + r03;
+  r30 := r30   + a3_b0;
+  c[3] := c[3] + r30;
+  c[1] := c[1] + r12;
+  a1_b2 := a[1] * b[2];
+  a2_b1 := a[2] * b[1];
+  r21 := a1_b2 + r12;
+  r21 := r21   + a2_b1;
+  c[2] := c[2] + r21;
+  c[1] := c[1] + r13;
+  a1_b3 := a[1] * b[3];
+  a3_b1 := a[3] * b[1];
+  r31 := a1_b3 + r13;
+  r31 := r31   + a3_b1;
+  c[3] := c[3] + r31;
+  c[2] := c[2] + r23;
+  a2_b3 := a[2] * b[3];
+  a3_b2 := a[3] * b[2];
+  r32 := a2_b3 + r23;
+  r32 := r32   + a3_b2;
+  c[3] := c[3] + r32;
+end
+
+(* Compute parity of N shares*)
+proc PARITY_N:
+  inputs: in1_[0:3],in2_[0:3],in3_[0:3],in4_[0:3]
+  outputs: out[0:3];
+  out := in1_ + in2_;
+  out := out + in3_;
+  out := out + in4_;
+end
+
+(* Compute parity of N-1 shares*)
+proc PARITY_Nm1:
+  inputs: in1_[0:3],in2_[0:3],in3_[0:3]
+  outputs: out[0:3];
+  out := in1_ + in2_;
+  out := out + in3_;
+end
+
+proc KKW_AND_OFFLINE:
+  inputs: lx1_[0:3], lx2_[0:3], lx3_[0:3], lx4_[0:3], ly1_[0:3], ly2_[0:3], ly3_[0:3], ly4_[0:3], lxy1_[0:3], lxy2_[0:3], lxy3_[0:3]
+  outputs: lxy4_[0:3] 
+  shares: lx[0:3], ly[0:3], lxyNm1[0:3], lxy[0:3]; 
+
+lx = PARITY_N(lx1_, lx2_, lx3_, lx4_ );
+ly = PARITY_N(ly1_, ly2_, ly3_, ly4_ );
+lxy = AND(lx, ly);
+lxyNm1 = PARITY_Nm1(lxy1_, lxy2_, lxy3_ );
+lxy4_ := lxy + lxyNm1;
+end
+
+proc KKW_AND_ONLINE:
+  inputs: hx[0:3], hy[0:3], lx1_[0:3], lx2_[0:3], lx3_[0:3], lx4_[0:3], ly1_[0:3], ly2_[0:3], ly3_[0:3], ly4_[0:3], lz1_[0:3], lz2_[0:3], lz3_[0:3], lz4_[0:3], lxy1_[0:3], lxy2_[0:3], lxy3_[0:3], lxy4_[0:3]
+  outputs: hz[0:3], s1_[0:3], s2_[0:3], s3_[0:3], s4_[0:3]
+  shares: a1_[0:3], a2_[0:3], a3_[0:3], a4_[0:3], b1_[0:3], b2_[0:3], b3_[0:3], b4_[0:3], c[0:3], s[0:3];
+
+(* compute broadcast messages of party 1 *)
+a1_ = AND(hx, ly1_);
+b1_ = AND(hy, lx1_);
+s1_ := lz1_ + lxy1_;
+s1_ := s1_ + a1_;
+s1_ := s1_ + b1_;
+
+(* compute broadcast messages of party 2 *)
+a2_ = AND(hx, ly2_);
+b2_ = AND(hy, lx2_);
+s2_ := lz2_ + lxy2_;
+s2_ := s2_ + a2_;
+s2_ := s2_ + b2_;
+
+(* compute broadcast messages of party 3 *)
+a3_ = AND(hx, ly3_);
+b3_ = AND(hy, lx3_);
+s3_ := lz3_ + lxy3_;
+s3_ := s3_ + a3_;
+s3_ := s3_ + b3_;
+
+(* compute broadcast messages of party 4 *)
+a4_ = AND(hx, ly4_);
+b4_ = AND(hy, lx4_);
+s4_ := lz4_ + lxy4_;
+s4_ := s4_ + a4_;
+s4_ := s4_ + b4_;
+
+c = AND(hx, hy);
+s = PARITY_N(s1_, s2_, s3_, s4_ );
+hz := c + s;
+end
+
+para noglitch SNI KKW_AND_OFFLINE
+para noglitch SNI KKW_AND_ONLINE

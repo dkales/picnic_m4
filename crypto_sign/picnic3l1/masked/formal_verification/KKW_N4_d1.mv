@@ -1,0 +1,95 @@
+(* Multiplication-based refresh *)
+proc REFM:
+ inputs: x[0:1]
+ outputs: y[0:1]
+ randoms: r01;
+  y[0] := x[0];
+  y[1] := x[1];
+  y[0] := y[0] + r01;
+  y[1] := y[1] + r01;
+end
+
+(* SNI secure AND *)
+proc AND:
+ inputs: a[0:1], b[0:1]
+ outputs: c[0:1]
+ randoms: r01;
+  c[0] := a[0] * b[0];
+  c[1] := a[1] * b[1];
+  c[0] := c[0] + r01;
+  a0_b1 := a[0] * b[1];
+  a1_b0 := a[1] * b[0];
+  r10 := a0_b1 + r01;
+  r10 := r10   + a1_b0;
+  c[1] := c[1] + r10;
+end
+
+(* Compute parity of N shares*)
+proc PARITY_N:
+  inputs: in1_[0:1],in2_[0:1],in3_[0:1],in4_[0:1]
+  outputs: out[0:1];
+  out := in1_ + in2_;
+  out := out + in3_;
+  out := out + in4_;
+end
+
+(* Compute parity of N-1 shares*)
+proc PARITY_Nm1:
+  inputs: in1_[0:1],in2_[0:1],in3_[0:1]
+  outputs: out[0:1];
+  out := in1_ + in2_;
+  out := out + in3_;
+end
+
+proc KKW_AND_OFFLINE:
+  inputs: lx1_[0:1], lx2_[0:1], lx3_[0:1], lx4_[0:1], ly1_[0:1], ly2_[0:1], ly3_[0:1], ly4_[0:1], lxy1_[0:1], lxy2_[0:1], lxy3_[0:1]
+  outputs: lxy4_[0:1] 
+  shares: lx[0:1], ly[0:1], lxyNm1[0:1], lxy[0:1]; 
+
+lx = PARITY_N(lx1_, lx2_, lx3_, lx4_ );
+ly = PARITY_N(ly1_, ly2_, ly3_, ly4_ );
+lxy = AND(lx, ly);
+lxyNm1 = PARITY_Nm1(lxy1_, lxy2_, lxy3_ );
+lxy4_ := lxy + lxyNm1;
+end
+
+proc KKW_AND_ONLINE:
+  inputs: hx[0:1], hy[0:1], lx1_[0:1], lx2_[0:1], lx3_[0:1], lx4_[0:1], ly1_[0:1], ly2_[0:1], ly3_[0:1], ly4_[0:1], lz1_[0:1], lz2_[0:1], lz3_[0:1], lz4_[0:1], lxy1_[0:1], lxy2_[0:1], lxy3_[0:1], lxy4_[0:1]
+  outputs: hz[0:1], s1_[0:1], s2_[0:1], s3_[0:1], s4_[0:1]
+  shares: a1_[0:1], a2_[0:1], a3_[0:1], a4_[0:1], b1_[0:1], b2_[0:1], b3_[0:1], b4_[0:1], c[0:1], s[0:1];
+
+(* compute broadcast messages of party 1 *)
+a1_ = AND(hx, ly1_);
+b1_ = AND(hy, lx1_);
+s1_ := lz1_ + lxy1_;
+s1_ := s1_ + a1_;
+s1_ := s1_ + b1_;
+
+(* compute broadcast messages of party 2 *)
+a2_ = AND(hx, ly2_);
+b2_ = AND(hy, lx2_);
+s2_ := lz2_ + lxy2_;
+s2_ := s2_ + a2_;
+s2_ := s2_ + b2_;
+
+(* compute broadcast messages of party 3 *)
+a3_ = AND(hx, ly3_);
+b3_ = AND(hy, lx3_);
+s3_ := lz3_ + lxy3_;
+s3_ := s3_ + a3_;
+s3_ := s3_ + b3_;
+
+(* compute broadcast messages of party 4 *)
+a4_ = AND(hx, ly4_);
+b4_ = AND(hy, lx4_);
+s4_ := lz4_ + lxy4_;
+s4_ := s4_ + a4_;
+s4_ := s4_ + b4_;
+
+c = AND(hx, hy);
+s = PARITY_N(s1_, s2_, s3_, s4_ );
+hz := c + s;
+end
+
+para noglitch SNI KKW_AND_OFFLINE
+para noglitch SNI KKW_AND_ONLINE

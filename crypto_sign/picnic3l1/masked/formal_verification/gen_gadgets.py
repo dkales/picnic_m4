@@ -5,8 +5,8 @@ import sys
 
 def create_argument_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-N", "--Players", type=int, default=4, help="number of MPC players")
-    parser.add_argument("-n", "--Nbits", type=int, default=12, help="LowMC block size in bits")
+    parser.add_argument("-N", "--Parties", type=int, default=4, help="number of MPC parties")
+    parser.add_argument("-n", "--Nbits", type=int, default=9, help="LowMC block size in bits")
     parser.add_argument("-r", "--Round", type=int, default=2, help="number of LowMC rounds")
     parser.add_argument("-d", "--Maksing", type=int, default=1, help="masking order")
     parser.add_argument("-t", "--Type", type=str, default='PICNIC', help="KKW or PICNIC")
@@ -15,7 +15,7 @@ def create_argument_parser():
 
 parser    = create_argument_parser()
 arguments = parser.parse_args()
-N         = arguments.Players 
+N         = arguments.Parties
 n         = arguments.Nbits
 r         = arguments.Round
 d         = arguments.Maksing 
@@ -89,27 +89,6 @@ for i in range(0,d):
 print("end")
 print("")
 
-# -------------------- AFFINE --------------------
-print("(* Affine layer gadget *)")
-print("proc AFFINE:")
-print("  inputs: ", end='')
-for i in range(1,n):
-    print("st%d_[0:%d]" % (i, d), end=',') 
-print("st%d_[0:%d]" % (n, d))
-
-print("  outputs: ", end='')
-for i in range(1,n):
-    print("a%d_[0:%d]" % (i, d), end=',')
-print("a%d_[0:%d];" % (n, d))
-
-for i in range(1,n+1):
-    print("  a%d_ := st1_ + st2_;" % i)
-    for j in range(3,n+1):
-        print("  a%d_ := a%d_ + st%d_;" % (i,i,j))
-
-print("end")
-print("")
-
 # -------------------- PARITY_N --------------------
 print("(* Compute parity of N shares*)")
 print("proc PARITY_N:")
@@ -167,7 +146,9 @@ if t == "KKW":
     print("  shares: ", end='')
     print("lx[0:%d], " % d, end='')
     print("ly[0:%d], " % d, end='')
+    print("lxyNm1[0:%d], " % d, end='')
     print("lxy[0:%d]; " % d)
+    print("")
         
     print("lx = PARITY_N(", end='')
     for j in range(1,N):
@@ -181,9 +162,12 @@ if t == "KKW":
     
     print("lxy = AND(lx, ly);")
     
-    print("lxy%d_ := lxy + lxy1_;" % N)
-    for j in range(2,N):
-        print("lxy%d_ := lxy%d_ + lxy%d_;" % (N, N, j))
+    print("lxyNm1 = PARITY_Nm1(", end='')
+    for j in range(1,N-1):
+        print("lxy%d_, " % j, end='')
+    print("lxy%d_ );" % (N-1))
+    
+    print("lxy%d_ := lxy + lxyNm1;" % N)
     
     print("end")
     print("")
@@ -220,29 +204,59 @@ if t == "KKW":
 
     ## Process starts here
     for j in range(1,N+1):
+        print("(* compute broadcast messages of party %d *)" % j)
         print("a%d_ = AND(hx, ly%d_);" % (j, j))
         print("b%d_ = AND(hy, lx%d_);" % (j, j))
-        print("s%d_ := a%d_ + b%d_;" % (j, j, j))
-        print("s%d_ := s%d_ + lz%d_;" % (j, j, j))
-        print("s%d_ := s%d_ + lxy%d_;" % (j, j, j))
+        print("s%d_ := lz%d_ + lxy%d_;" % (j, j, j))
+        print("s%d_ := s%d_ + a%d_;" % (j, j, j))
+        print("s%d_ := s%d_ + b%d_;" % (j, j, j))
+        print("")
 
     print("c = AND(hx, hy);")
 
-    print("s := s1_ + s2_;")
-    for j in range(3,N+1):
-        print("s := s + s%d_;" % j)
+    
+    print("s = PARITY_N(", end='')
+    for j in range(1,N):
+        print("s%d_, " % j, end='')
+    print("s%d_ );" % N)
+    
     print("hz := c + s;")
     print("end")
     print("")
     
-    print('para noglitch SNI REFM')
-    print('para noglitch SNI AND')
+    #print('para noglitch SNI REFM')
+    #print('para noglitch SNI AND')
     print('para noglitch SNI KKW_AND_OFFLINE')
     print('para noglitch SNI KKW_AND_ONLINE')
+    
+    if(f==1):
+        sys.stdout.close()
     sys.exit()
 
 
 # -------------------- PICNIC mode --------------------
+# -------------------- AFFINE --------------------
+print("(* Affine layer gadget *)")
+print("proc AFFINE:")
+print("  inputs: ", end='')
+for i in range(1,n):
+    print("st%d_[0:%d]" % (i, d), end=',') 
+print("st%d_[0:%d]" % (n, d))
+
+print("  outputs: ", end='')
+for i in range(1,n):
+    print("a%d_[0:%d]" % (i, d), end=',')
+print("a%d_[0:%d];" % (n, d))
+
+for i in range(1,n+1):
+    print("  a%d_ := st1_ + st2_;" % i)
+    for j in range(3,n+1):
+        print("  a%d_ := a%d_ + st%d_;" % (i,i,j))
+
+print("end")
+print("")
+
+
 # -------------------- PICNIC_AND_OFFLINE --------------------
 print("proc PICNIC_AND_OFFLINE:")
 print("  inputs: ", end='')
@@ -1021,7 +1035,7 @@ for k in range(1,r+1):
 print("end")
 print("")
 
-print('verbose 1')
+#print('verbose 1')
 #print('para noglitch NI AFFINE')
 #print('para noglitch SNI PICNIC_AND_OFFLINE')
 #print('para noglitch NI SBOX_OFFLINE')
