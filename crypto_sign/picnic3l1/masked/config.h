@@ -1,10 +1,10 @@
 /* Configurations used in the paper. */
 //#define CONFIG_MASK_NONE         // No Keccak masking.
-//#define CONFIG_SNI_SECURE        // Refresh AND inputs/output and Keccak result.
-//#define CONFIG_DOM_SECURE        // Randomize ANDs using Domain-Oriented Masking.
-//#define CONFIG_MASK_IND          // Mask all calls to Keccak using independent values.
+//#define CONFIG_SNI_SECURE        // Refresh AND inputs/output and Keccak result, "All-SNI" in the paper.
+//#define CONFIG_DOM_SECURE        // Randomize ANDs using Domain-Oriented Masking, "All-DOM" in the paper.
+//#define CONFIG_IND_SECURE        // Mask all calls to Keccak using independent values, "All-IND" in the paper.
 //#define CONFIG_MASK_SEL          // Selective masking with independent values.
-#define CONFIG_HALF_MASK         // Selective half-masking with independent values.
+#define CONFIG_SEL_HALF            // Selective half-masking with independent values.
 //#define CONFIG_LEAK_TEST         // Reduced version for running leakage test.
 //#define CONFIG_TEST_VECTORS      // Compatible with known-answer tests.
 
@@ -24,7 +24,7 @@
 #define KECCAK_DOM_SECURE   // Refresh AND operations.
 #endif
 
-#ifdef CONFIG_MASK_IND
+#ifdef CONFIG_IND_SECURE
 #define KECCAK_MASK_ALL     // Mask all calls to SHA-3.
 #endif
 
@@ -32,7 +32,7 @@
 #undef KECCAK_MASK_ALL
 #endif
 
-#ifdef CONFIG_HALF_MASK
+#ifdef CONFIG_SEL_HALF
 #undef KECCAK_MASK_ALL
 #define KECCAK_MASK_HALF    // Mask first 12 rounds of SHA-3 only.
 #endif
