@@ -17,8 +17,16 @@ For Picnic3-L1 we provide three variants:
   Picnic specification.
 * `masked`: This is the masked implementation designed and analyzed in the paper 
   [Side-Channel Protections for Picnic Signatures](https://eprint.iacr.org/2021/735).
-  It aims to provide first order protection against probing side-channel attacks.  See 
-  the paper for description and analysis of the countermeasures.
+  It aims to provide first order protection against probing side-channel attacks. See 
+  the paper for description and analysis of the countermeasures. Modify file `config.h`
+  for selecting the masking approach (default is *selective half-masking*).
+  
+There are two possibilities to execute the implementations:
+* For x64 platforms, use the `Makefile` inside `opt/` or `masked/` to build the corresponding version.
+Tests can be built and executed with `make kats` and by running the produced binary. Benchmarks can be executed after `make bench` by running the binary with instance `7`.
+* For ARM Cortex-M4, we support the [pqm4 framework](https://github.com/mupq/pqm4). Copy or link the `crypto_sign/picnic3l1` folder inside `pqm4/crypto_sign`. After that, the whole `pqm4` functionality will be available (test, benchmarks, testvectors, etc). We refer to `pqm4` for additional usage documentation.
+
+Our formal verification scripts can be validated with [maskVerif](https://gitlab.com/benjgregoire/maskverif). 
 
 ## Adaptation of Picnic-L{1,3,5}-{FS,full} to low memory scenarios
 
